@@ -1,7 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { Search, AlertTriangle, Wind, Droplets, Activity, Settings, Clock, CloudLightning, Terminal, Play, Pause, SkipBack, SkipForward, BarChart2, Cpu } from 'lucide-react';
+import { 
+  Search, AlertTriangle, Wind, Droplets, Activity, Settings, Clock, 
+  CloudLightning, Terminal, Play, Pause, SkipBack, SkipForward, 
+  BarChart2, Cpu, ShieldAlert, RotateCcw, Thermometer, Plane 
+} from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import Link from 'next/link';
 import { ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -609,18 +613,34 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <Link href="/analytics" className="nav-icon" title="Meteorological Analytics & Validation" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600 }}>
-            <BarChart2 size={18} />
+        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link href="/disaster-ops" className="nav-link-btn" title="Municipal Disaster Ops & Civil Defense">
+            <ShieldAlert size={14} color="#ef4444" />
+            <span>Disaster Ops</span>
+          </Link>
+          <Link href="/replay" className="nav-link-btn" title="Historical Storm Replay & Benchmarks">
+            <RotateCcw size={14} color="var(--color-precip)" />
+            <span>Case Studies</span>
+          </Link>
+          <Link href="/thermodynamics" className="nav-link-btn" title="Vertical Atmospheric Soundings (Skew-T)">
+            <Thermometer size={14} color="#f59e0b" />
+            <span>Soundings</span>
+          </Link>
+          <Link href="/aviation" className="nav-link-btn" title="Aviation Weather & Runway Safety">
+            <Plane size={14} color="#60A5FA" />
+            <span>Aviation</span>
+          </Link>
+          <Link href="/analytics" className="nav-link-btn" title="Meteorological Validation & Analytics">
+            <BarChart2 size={14} />
             <span>Analytics</span>
           </Link>
-          <Link href="/models" className="nav-icon" title="Physics Fusion & Explainability (XAI)" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600 }}>
-            <Cpu size={18} />
+          <Link href="/models" className="nav-link-btn" title="Physics Fusion & Explainability (XAI)">
+            <Cpu size={14} />
             <span>Models</span>
           </Link>
-          <button className="nav-icon" onClick={() => setShowTerminal(!showTerminal)} title="MLOps Terminal" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Terminal size={20} /></button>
-          <Link href="/alerts" className="nav-icon" title="Active Severe Alerts"><AlertTriangle size={20} color="var(--color-severe)" /></Link>
-          <Link href="/settings" className="nav-icon" title="Settings"><Settings size={20} /></Link>
+          <button className="nav-icon" onClick={() => setShowTerminal(!showTerminal)} title="MLOps Terminal" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px' }}><Terminal size={18} /></button>
+          <Link href="/alerts" className="nav-icon" title="Active Severe Alerts" style={{ padding: '0 4px' }}><AlertTriangle size={18} color="var(--color-severe)" /></Link>
+          <Link href="/settings" className="nav-icon" title="Settings" style={{ padding: '0 4px' }}><Settings size={18} /></Link>
         </div>
       </header>
 
