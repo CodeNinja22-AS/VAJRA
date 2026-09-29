@@ -1,0 +1,142 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Project Flow">
+    <mxGraphModel dx="1000" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Nodes -->
+        <mxCell id="f1" value="Start (T-0)&#10;Dask Cron Trigger" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="40" width="120" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="f2" value="Fetch Radar, Satellite, &amp; NWP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="330" y="160" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f3" value="All Downloads Success?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="340" y="260" width="140" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="f4" value="Forward Fill / Impute Missing" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="270" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f5" value="Py-ART &amp; MetPy&#10;Grid Alignment (1km)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="330" y="380" width="160" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="f6" value="Write to Zarr Store" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="350" y="480" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f7" value="Trigger AI Inference&#10;(PyTorch ONNX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="580" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f8" value="Generate QPF &amp; Severe Probabilities" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="680" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f9" value="Threshold &gt; 45 dBZ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="340" y="780" width="140" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="f10" value="Insert Alert into PostGIS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="130" y="790" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f11" value="FastAPI Upsert &amp; Serve" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="900" width="160" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="f12" value="UI: Trigger Threat State&#10;Update Mapbox Layers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="330" y="1000" width="160" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="f13" value="End (T+5)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1100" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="fe1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f1" target="f2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fe2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f2" target="f3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fe3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f3" target="f5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+          <mxCell value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="fe3">
+            <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+              <mxPoint as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+        
+        <mxCell id="fe4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f3" target="f4">
+          <mxGeometry relative="1" as="geometry" />
+          <mxCell value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="fe4">
+            <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+              <mxPoint as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+        
+        <mxCell id="fe5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="f4" target="f5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f5" target="f6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fe7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f6" target="f7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fe8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f7" target="f8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fe9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f8" target="f9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fe10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f9" target="f11">
+          <mxGeometry relative="1" as="geometry" />
+          <mxCell value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="fe10">
+            <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+              <mxPoint as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+        
+        <mxCell id="fe11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f9" target="f10">
+          <mxGeometry relative="1" as="geometry" />
+          <mxCell value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="fe11">
+            <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+              <mxPoint as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </mxCell>
+        
+        <mxCell id="fe12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="f10" target="f11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f11" target="f12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fe14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="f12" target="f13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

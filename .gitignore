@@ -1,0 +1,30 @@
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Data and Notebooks
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+notebooks/.ipynb_checkpoints
+
+# IDEs
+.vscode/
+.idea/
+
+# Tooling
+.ruff_cache/
+.mypy_cache/

@@ -1,0 +1,26 @@
+[project]
+name = "vajra"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "arm-pyart>=2.3.0",
+    "cdsapi>=0.7.7",
+    "dask>=2026.8.0",
+    "h5py>=3.16.0",
+    "imdlib>=0.1.22",
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.11.2",
+    "netcdf4>=1.7.4",
+    "pyproj>=3.8.0",
+    "python-dotenv>=1.2.3",
+    "rasterio>=1.5.1",
+    "scikit-learn>=1.9.1",
+    "torch>=2.14.0",
+    "xarray>=2026.7.0",
+    "xgboost>=3.4.1",
+    "xradar>=0.12.0",
+    "zarr>=3.4.0",
+]
