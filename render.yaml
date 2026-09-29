@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: vajra-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: "*"
