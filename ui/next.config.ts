@@ -10,13 +10,25 @@ if (fs.existsSync(envPath)) {
   config({ path: envPath });
 }
 
+const sanitizeUrl = (val?: string) => {
+  if (!val) return val;
+  let s = val.trim();
+  if (s && !s.startsWith('http://') && !s.startsWith('https://')) {
+    s = `https://${s}`;
+  }
+  return s.replace(/\/+$/, '');
+};
+
+const rawApiUrl = sanitizeUrl(process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:8000';
+const rawMapboxToken = (process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '').trim();
+
 const nextConfig: NextConfig = {
   output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
   env: {
-    NEXT_MAPBOX_TOKEN: process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
-    NEXT_API_URL: process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL,
+    NEXT_MAPBOX_TOKEN: rawMapboxToken,
+    NEXT_API_URL: rawApiUrl,
+    NEXT_PUBLIC_MAPBOX_TOKEN: rawMapboxToken,
+    NEXT_PUBLIC_API_URL: rawApiUrl,
   },
 };
 

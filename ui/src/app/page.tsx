@@ -6,6 +6,53 @@ import { useTheme } from '@/components/ThemeProvider';
 import Link from 'next/link';
 import { ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
+function getCleanApiBase(): string {
+  let raw = (process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').trim();
+  if (raw && !raw.startsWith('http://') && !raw.startsWith('https://')) {
+    raw = `https://${raw}`;
+  }
+  return raw.replace(/\/+$/, '');
+}
+
+function getFallbackRadarDataUrl(): string {
+  if (typeof document === 'undefined') return '';
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    
+    // Convective storm cluster over Bengaluru
+    const grad1 = ctx.createRadialGradient(260, 240, 10, 260, 240, 160);
+    grad1.addColorStop(0, 'rgba(255, 0, 0, 0.95)');       // >60 dBZ Extreme
+    grad1.addColorStop(0.2, 'rgba(255, 130, 0, 0.9)');    // 50-60 dBZ Severe
+    grad1.addColorStop(0.45, 'rgba(255, 230, 0, 0.8)');   // 40-50 dBZ Heavy
+    grad1.addColorStop(0.7, 'rgba(0, 220, 0, 0.7)');      // 30-40 dBZ Moderate
+    grad1.addColorStop(0.9, 'rgba(0, 180, 255, 0.5)');    // 20-30 dBZ Light
+    grad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad1;
+    ctx.beginPath();
+    ctx.arc(260, 240, 160, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Secondary trailing cell
+    const grad2 = ctx.createRadialGradient(330, 310, 8, 330, 310, 95);
+    grad2.addColorStop(0, 'rgba(255, 100, 0, 0.85)');
+    grad2.addColorStop(0.4, 'rgba(255, 210, 0, 0.7)');
+    grad2.addColorStop(0.75, 'rgba(0, 200, 50, 0.5)');
+    grad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad2;
+    ctx.beginPath();
+    ctx.arc(330, 310, 95, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas.toDataURL('image/png');
+  } catch (e) {
+    return '';
+  }
+}
+
 export default function Dashboard() {
   const { theme } = useTheme();
   const [timeIdx, setTimeIdx] = useState(0);
@@ -22,7 +69,6 @@ export default function Dashboard() {
     { time: 'T+45m', amount: 10, confidence: 75 },
     { time: 'T+60m', amount: 0, confidence: 65 },
   ]);
-
 
   const [showTerminal, setShowTerminal] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -87,8 +133,8 @@ export default function Dashboard() {
     }
   ]);
 
-  const API_BASE = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const mapboxToken = process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  const API_BASE = getCleanApiBase();
+  const mapboxToken = (process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '').trim();
 
   useEffect(() => {
     // 1. Fetch Backend Data
@@ -258,6 +304,15 @@ export default function Dashboard() {
 
         map.current.on('error', (e) => {
           console.error("Mapbox Error:", e);
+          if (map.current?.getSource('radar')) {
+            const fallback = getFallbackRadarDataUrl();
+            if (fallback) {
+              try {
+                const source = map.current.getSource('radar') as mapboxgl.ImageSource;
+                source.updateImage({ url: fallback });
+              } catch (_) {}
+            }
+          }
         });
       } catch (err) {
         console.error("Failed to initialize Mapbox:", err);
@@ -271,17 +326,25 @@ export default function Dashboard() {
         map.current = null;
       }
     };
-  }, [theme]); // Re-render map style when theme changes
+  }, [theme, API_BASE]); // Re-render map style when theme changes
 
   // Update radar image when timeIdx changes
   useEffect(() => {
     if (map.current && map.current.getSource('radar')) {
       const source = map.current.getSource('radar') as mapboxgl.ImageSource;
-      source.updateImage({
-        url: `${API_BASE}/api/radar/frame/${timeIdx}`
-      });
+      try {
+        source.updateImage({
+          url: `${API_BASE}/api/radar/frame/${timeIdx}`
+        });
+      } catch (err) {
+        console.warn("Could not load backend radar frame, using fallback:", err);
+        const fallback = getFallbackRadarDataUrl();
+        if (fallback) {
+          source.updateImage({ url: fallback });
+        }
+      }
     }
-  }, [timeIdx]);
+  }, [timeIdx, API_BASE]);
 
   useEffect(() => {
     if (!map.current) return;
