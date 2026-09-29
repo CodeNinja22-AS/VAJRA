@@ -22,15 +22,19 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_MAPBOX_TOKEN: ${NEXT_MAPBOX_TOKEN:-${NEXT_PUBLIC_MAPBOX_TOKEN:-}}
+        NEXT_API_URL: ${NEXT_API_URL:-${NEXT_PUBLIC_API_URL:-http://localhost:8000}}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_MAPBOX_TOKEN:-${NEXT_PUBLIC_MAPBOX_TOKEN:-}}
+        NEXT_PUBLIC_API_URL: ${NEXT_API_URL:-${NEXT_PUBLIC_API_URL:-http://localhost:8000}}
     container_name: vajra-frontend
     ports:
       - "3000:3000"
     environment:
       - PORT=3000
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+      - NEXT_API_URL=${NEXT_API_URL:-${NEXT_PUBLIC_API_URL:-http://localhost:8000}}
+      - NEXT_MAPBOX_TOKEN=${NEXT_MAPBOX_TOKEN:-${NEXT_PUBLIC_MAPBOX_TOKEN:-}}
+      - NEXT_PUBLIC_API_URL=${NEXT_API_URL:-${NEXT_PUBLIC_API_URL:-http://localhost:8000}}
+      - NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_MAPBOX_TOKEN:-${NEXT_PUBLIC_MAPBOX_TOKEN:-}}
     depends_on:
       - backend
     restart: unless-stopped

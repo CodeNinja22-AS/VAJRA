@@ -87,7 +87,8 @@ export default function Dashboard() {
     }
   ]);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const API_BASE = process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const mapboxToken = process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   useEffect(() => {
     // 1. Fetch Backend Data
@@ -112,7 +113,7 @@ export default function Dashboard() {
     const interval = setInterval(fetchData, 5000);
 
     // 2. Initialize Mapbox
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    const token = mapboxToken;
     if (!token || token === 'your_mapbox_token_here') return () => clearInterval(interval);
 
     mapboxgl.accessToken = token;
@@ -343,7 +344,7 @@ export default function Dashboard() {
   return (
     <div className={`dashboard-container ${isSevere ? 'threat-state-severe' : ''}`}>
       {/* Fallback CSS styling for when Mapbox token is missing */}
-      {!process.env.NEXT_PUBLIC_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN === 'your_mapbox_token_here' ? (
+      {!mapboxToken || mapboxToken === 'your_mapbox_token_here' ? (
         <div className="map-background" style={{ width: '100%', height: '100%', position: 'absolute' }}>
           <div className="radar-ring"></div>
           <div className="radar-ring r-2"></div>
