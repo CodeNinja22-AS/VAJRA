@@ -23,12 +23,6 @@ export default function Dashboard() {
     { time: 'T+60m', amount: 0, confidence: 65 },
   ]);
 
-  const [telemetry, setTelemetry] = useState({
-    temp: 28.4,
-    humidity: 78,
-    wind: 28,
-    aqi: 68
-  });
 
   const [showTerminal, setShowTerminal] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -93,10 +87,12 @@ export default function Dashboard() {
     }
   ]);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   useEffect(() => {
     // 1. Fetch Backend Data
     const fetchData = () => {
-      fetch('http://localhost:8000/api/nowcast')
+      fetch(`${API_BASE}/api/nowcast`)
         .then(res => {
           if (!res.ok) throw new Error("Backend not connected");
           return res.json();
@@ -163,9 +159,9 @@ export default function Dashboard() {
           const layers = map.current?.getStyle()?.layers;
           let labelLayerId;
           if (layers) {
-            for (let i = 0; i < layers.length; i++) {
-              if (layers[i].type === 'symbol' && layers[i].layout && layers[i].layout['text-field']) {
-                labelLayerId = layers[i].id;
+            for (const layer of layers) {
+              if (layer.type === 'symbol' && layer.layout && (layer.layout as Record<string, any>)?.['text-field']) {
+                labelLayerId = layer.id;
                 break;
               }
             }
@@ -208,7 +204,7 @@ export default function Dashboard() {
           // Add radar source mapping the Bengaluru bounding box
           map.current?.addSource('radar', {
             type: 'image',
-            url: `http://localhost:8000/api/radar/frame/${timeIdx}`,
+            url: `${API_BASE}/api/radar/frame/${timeIdx}`,
             coordinates: [
               [77.4, 13.2], // Top left (lon, lat)
               [77.8, 13.2], // Top right
@@ -281,7 +277,7 @@ export default function Dashboard() {
     if (map.current && map.current.getSource('radar')) {
       const source = map.current.getSource('radar') as mapboxgl.ImageSource;
       source.updateImage({
-        url: `http://localhost:8000/api/radar/frame/${timeIdx}`
+        url: `${API_BASE}/api/radar/frame/${timeIdx}`
       });
     }
   }, [timeIdx]);

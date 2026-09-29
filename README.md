@@ -66,61 +66,77 @@ graph TD
     H -->|Threat State Trigger| I[User Action]
 ```
 
-## 🚀 Getting Started
+## 🚀 Deployment & Getting Started
 
-### 📋 Prerequisites
-- Python 3.11+
-- Node.js (v18+)
-- `uv` (Fast Python package manager)
-- PostgreSQL with PostGIS extension
+### 🐳 Quickstart: Docker Compose (Recommended for Production)
+The simplest and fastest way to deploy the entire VAJRA stack (Next.js Command Center + FastAPI Backend) in production:
 
-### ⚙️ Installation
 ```bash
-# Clone the repository
+# 1. Clone repository
 git clone https://github.com/CodeNinja22-AS/VAJRA.git
 cd VAJRA
 
-# Setup Python Backend Environment
-uv venv
-source .venv/bin/activate
-uv pip install -r pyproject.toml
+# 2. Configure environment (optional: set your Mapbox token)
+cp .env.example .env
 
-# Setup Frontend Environment
+# 3. Build and launch all services
+docker compose up --build -d
+```
+- **Next.js UI:** [http://localhost:3000](http://localhost:3000)
+- **FastAPI Backend:** [http://localhost:8000](http://localhost:8000)
+- **Interactive Swagger Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+### 💻 Manual / Local Development Setup
+
+#### 📋 Prerequisites
+- Python 3.11 or 3.12
+- Node.js (v18+)
+- `uv` (Fast Python package manager)
+
+#### ⚙️ 1. Setup Backend
+```bash
+# Create virtual environment and install serving dependencies
+uv venv --python 3.12
+.venv\Scripts\activate   # On Windows (or 'source .venv/bin/activate' on Linux/macOS)
+uv pip install -r requirements.txt
+
+# Start backend server
+python main.py
+```
+
+#### ⚙️ 2. Setup Frontend
+```bash
 cd ui
 npm install
+npm run dev      # For development
+# OR for production:
+npm run build
+npm run start
 ```
 
-### 🔒 Environment Setup
-Create a `.env` file in the root for Python, and a `.env.local` inside `ui/` for Next.js.
+### 🔒 Environment Configuration
+Refer to `.env.example` for available options:
 ```env
-# /ui/.env.local
-NEXT_PUBLIC_MAPBOX_TOKEN="your_mapbox_token"
-NEXT_PUBLIC_API_URL="http://localhost:8000"
+# Backend
+PORT=8000
+ENV=production
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
-# /.env (Backend)
-DATABASE_URL="postgresql://user:password@localhost:5432/vajra_db"
-CDSAPI_KEY="your_era5_copernicus_key"
-```
-
-### 🏃 Running the App
-**1. Start the FastAPI Backend:**
-```bash
-cd src/api
-uvicorn main:app --reload --port 8000
-```
-
-**2. Start the Next.js UI:**
-```bash
-cd ui
-npm run dev
+# Frontend
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_MAPBOX_TOKEN="pk.eyJ1Ijoi..."
 ```
 
 ## 🛠️ API Reference
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET    | `/api/radar/frame/{time_idx}` | Fetches raw radar rasters |
-| GET    | `/api/nowcast` | Returns storm cell prediction GeoJSONs |
-| GET    | `/api/telemetry/{lat}/{lon}` | Fetches CAPE, Shear, and QPF for a pixel |
+| GET    | `/health` | Healthcheck and model loading status |
+| GET    | `/api/nowcast` | Live nowcast telemetry, multi-horizon precipitation curve, active alerts |
+| GET    | `/api/radar/frame/{time_idx}` | Serves dynamic 512x512 PNG Doppler reflectivity overlays |
+| GET    | `/api/telemetry/{lat}/{lon}` | Localized sector thermodynamic indices (CAPE, Shear, QPF) |
+| POST   | `/predict` | Ingests atmospheric feature tensors, returns thunderstorm probability grids |
 
 ## 🧗 Challenges & Triumphs
 Aligning raw polar Doppler Radar sweeps with Geostationary Satellite imagery and coarse Lat/Lon NWP models was a massive spatial engineering challenge. We implemented a unified 1km Cartesian Master Grid and utilized `Dask` distributed computing with `Zarr` array stores to perform this interpolation, preventing out-of-memory crashes on massive meteorological tensors.

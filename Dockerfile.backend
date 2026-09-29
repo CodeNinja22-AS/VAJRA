@@ -1,0 +1,32 @@
+FROM python:3.12-slim
+
+# Install system dependencies needed for scientific libraries & XGBoost
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgomp1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy dependency specifications and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy backend application files
+COPY src/ ./src/
+COPY models/ ./models/
+COPY main.py .
+
+# Environment configuration
+ENV PORT=8000
+ENV PYTHONUNBUFFERED=1
+ENV ENV=production
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["python", "main.py"]

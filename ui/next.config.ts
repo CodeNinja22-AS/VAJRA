@@ -2,13 +2,19 @@ import type { NextConfig } from "next";
 import { config } from "dotenv";
 import path from "path";
 
-// Load the root .env file
+import fs from "fs";
+
+// Load the root .env file if it exists (local dev)
 const envPath = path.resolve(process.cwd(), '../.env');
-config({ path: envPath });
+if (fs.existsSync(envPath)) {
+  config({ path: envPath });
+}
 
 const nextConfig: NextConfig = {
+  output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
   env: {
     NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
 };
 

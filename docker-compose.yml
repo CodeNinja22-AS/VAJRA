@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: vajra-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENV=production
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - DATABASE_URL=${DATABASE_URL:-}
+      - CDSAPI_KEY=${CDSAPI_KEY:-}
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: vajra-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+    depends_on:
+      - backend
+    restart: unless-stopped
