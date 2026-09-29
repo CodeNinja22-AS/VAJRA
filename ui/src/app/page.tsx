@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { Search, AlertTriangle, Wind, Droplets, Activity, Settings, Clock, CloudLightning, Terminal } from 'lucide-react';
+import { Search, AlertTriangle, Wind, Droplets, Activity, Settings, Clock, CloudLightning, Terminal, Play, Pause, SkipBack, SkipForward, BarChart2, Cpu } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import Link from 'next/link';
 import { ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -56,6 +56,7 @@ function getFallbackRadarDataUrl(): string {
 export default function Dashboard() {
   const { theme } = useTheme();
   const [timeIdx, setTimeIdx] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const windCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -328,22 +329,47 @@ export default function Dashboard() {
     };
   }, [theme, API_BASE]); // Re-render map style when theme changes
 
-  // Update radar image when timeIdx changes
+  // Playback timer for auto-stepping through nowcast frames
   useEffect(() => {
-    if (map.current && map.current.getSource('radar')) {
-      const source = map.current.getSource('radar') as mapboxgl.ImageSource;
+    if (!isPlaying) return;
+    const playTimer = setInterval(() => {
+      setTimeIdx((prev) => (prev >= 17 ? 0 : prev + 1));
+    }, 750);
+    return () => clearInterval(playTimer);
+  }, [isPlaying]);
+
+  // Update radar image when timeIdx changes with debounce to prevent texture locking
+  const pendingTimeIdxRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!map.current || !map.current.getSource('radar')) return;
+
+    pendingTimeIdxRef.current = timeIdx;
+
+    const timer = setTimeout(() => {
+      if (pendingTimeIdxRef.current === null) return;
+      const targetIdx = pendingTimeIdxRef.current;
+      pendingTimeIdxRef.current = null;
+
+      const source = map.current?.getSource('radar') as mapboxgl.ImageSource | undefined;
+      if (!source) return;
+
       try {
         source.updateImage({
-          url: `${API_BASE}/api/radar/frame/${timeIdx}`
+          url: `${API_BASE}/api/radar/frame/${targetIdx}`
         });
       } catch (err) {
         console.warn("Could not load backend radar frame, using fallback:", err);
         const fallback = getFallbackRadarDataUrl();
         if (fallback) {
-          source.updateImage({ url: fallback });
+          try {
+            source.updateImage({ url: fallback });
+          } catch (_) {}
         }
       }
-    }
+    }, 35); // 35ms debounce guarantees responsive 60fps drag without Mapbox stalls
+
+    return () => clearTimeout(timer);
   }, [timeIdx, API_BASE]);
 
   useEffect(() => {
@@ -449,10 +475,18 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="nav-actions">
-          <button className="nav-icon" onClick={() => setShowTerminal(!showTerminal)} title="MLOps Terminal"><Terminal size={20} /></button>
-          <Link href="/alerts" className="nav-icon"><AlertTriangle size={20} color="var(--color-severe)" /></Link>
-          <Link href="/settings" className="nav-icon"><Settings size={20} /></Link>
+        <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <Link href="/analytics" className="nav-icon" title="Meteorological Analytics & Validation" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600 }}>
+            <BarChart2 size={18} />
+            <span>Analytics</span>
+          </Link>
+          <Link href="/models" className="nav-icon" title="Physics Fusion & Explainability (XAI)" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600 }}>
+            <Cpu size={18} />
+            <span>Models</span>
+          </Link>
+          <button className="nav-icon" onClick={() => setShowTerminal(!showTerminal)} title="MLOps Terminal" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Terminal size={20} /></button>
+          <Link href="/alerts" className="nav-icon" title="Active Severe Alerts"><AlertTriangle size={20} color="var(--color-severe)" /></Link>
+          <Link href="/settings" className="nav-icon" title="Settings"><Settings size={20} /></Link>
         </div>
       </header>
 
@@ -547,23 +581,92 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* Bottom Timeline Dock */}
-      <div className="glass-panel bottom-dock">
-        <div className="timeline-controls">
-          <Clock size={16} />
-          <span>Forecast vs. History</span>
+      {/* Bottom Timeline Dock with Play/Pause & Step Controls */}
+      <div className="glass-panel bottom-dock" style={{ zIndex: 30, display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="timeline-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => setIsPlaying(!isPlaying)}
+            style={{
+              background: isPlaying ? 'var(--color-severe)' : 'var(--color-precip)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '50%',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'transform 0.15s, background 0.2s',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              flexShrink: 0
+            }}
+            title={isPlaying ? "Pause Radar Loop" : "Play Radar Loop"}
+          >
+            {isPlaying ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: '2px' }} />}
+          </button>
+
+          <button
+            onClick={() => setTimeIdx(prev => Math.max(0, prev - 1))}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              padding: '6px 8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            title="Previous Step (-5m)"
+          >
+            <SkipBack size={14} />
+          </button>
+
+          <button
+            onClick={() => setTimeIdx(prev => Math.min(17, prev + 1))}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              padding: '6px 8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+            title="Next Step (+5m)"
+          >
+            <SkipForward size={14} />
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
+            <Clock size={16} />
+            <span style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>Forecast Horizon</span>
+          </div>
         </div>
-        <div className="scrubber-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-          <span className="time-label">T+0</span>
+
+        <div className="scrubber-container" style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, position: 'relative', zIndex: 35 }}>
+          <span className="time-label" style={{ fontWeight: 600, fontSize: '12px' }}>T+0m</span>
           <input
             type="range"
             min="0"
             max="17"
+            step="1"
             value={timeIdx}
-            onChange={(e) => setTimeIdx(parseInt(e.target.value))}
-            style={{ flex: 1, cursor: 'pointer', accentColor: 'var(--color-precip)' }}
+            onChange={(e) => setTimeIdx(parseInt(e.target.value, 10))}
+            style={{
+              flex: 1,
+              cursor: 'pointer',
+              accentColor: 'var(--color-precip)',
+              height: '8px',
+              borderRadius: '4px',
+              touchAction: 'none'
+            }}
           />
-          <span className="time-label" style={{ minWidth: '60px' }}>T+{timeIdx * 5}m</span>
+          <span className="time-label" style={{ minWidth: '70px', fontWeight: 'bold', color: 'var(--color-precip)', fontSize: '14px', textAlign: 'right' }}>
+            T+{timeIdx * 5}m
+          </span>
         </div>
       </div>
 
