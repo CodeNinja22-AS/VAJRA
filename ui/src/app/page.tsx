@@ -6,7 +6,24 @@ import { useTheme } from '@/components/ThemeProvider';
 import Link from 'next/link';
 import { ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
+const RADAR_BOUNDS: [[number, number], [number, number], [number, number], [number, number]] = [
+  [77.4, 13.2], // Top left (lon, lat)
+  [77.8, 13.2], // Top right
+  [77.8, 12.8], // Bottom right
+  [77.4, 12.8]  // Bottom left
+];
+
 function getCleanApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      const pub = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+      if (pub && !pub.includes('localhost') && !pub.includes('127.0.0.1')) {
+        return pub.replace(/\/+$/, '');
+      }
+      return 'https://vajra-production-aad1.up.railway.app';
+    }
+  }
   let raw = (process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').trim();
   if (raw && !raw.startsWith('http://') && !raw.startsWith('https://')) {
     raw = `https://${raw}`;
@@ -14,7 +31,7 @@ function getCleanApiBase(): string {
   return raw.replace(/\/+$/, '');
 }
 
-function getFallbackRadarDataUrl(): string {
+function generateRadarFrame(timeStep: number): string {
   if (typeof document === 'undefined') return '';
   try {
     const canvas = document.createElement('canvas');
@@ -22,30 +39,87 @@ function getFallbackRadarDataUrl(): string {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
-    
-    // Convective storm cluster over Bengaluru
-    const grad1 = ctx.createRadialGradient(260, 240, 10, 260, 240, 160);
-    grad1.addColorStop(0, 'rgba(255, 0, 0, 0.95)');       // >60 dBZ Extreme
-    grad1.addColorStop(0.2, 'rgba(255, 130, 0, 0.9)');    // 50-60 dBZ Severe
-    grad1.addColorStop(0.45, 'rgba(255, 230, 0, 0.8)');   // 40-50 dBZ Heavy
-    grad1.addColorStop(0.7, 'rgba(0, 220, 0, 0.7)');      // 30-40 dBZ Moderate
-    grad1.addColorStop(0.9, 'rgba(0, 180, 255, 0.5)');    // 20-30 dBZ Light
-    grad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = grad1;
+
+    // timeStep is 0 to 17 (0 = T+0m, 17 = T+85m)
+    const t = Math.max(0, Math.min(17, timeStep));
+    const progress = t / 17; // 0.0 (NW) to 1.0 (SE)
+
+    ctx.clearRect(0, 0, 512, 512);
+
+    // Primary convective cell advection: NW (150, 135) -> Center (258, 242) -> SE (365, 345)
+    const cx1 = 150 + progress * 215;
+    const cy1 = 135 + progress * 210;
+
+    // Convective intensity cycle: peaks at t=7..9 (T+35m..T+45m)
+    const peakFactor = Math.max(0, 1 - Math.abs(progress - 0.45) * 1.8);
+    const r1 = 110 + Math.sin(progress * Math.PI) * 65;
+
+    // 1. Broad outer precipitation shield (Light 20-30 dBZ Cyan/Blue halo)
+    const gradShield = ctx.createRadialGradient(cx1, cy1, 15, cx1, cy1, r1 * 1.25);
+    gradShield.addColorStop(0, 'rgba(0, 180, 255, 0.45)');
+    gradShield.addColorStop(0.7, 'rgba(0, 200, 255, 0.25)');
+    gradShield.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = gradShield;
     ctx.beginPath();
-    ctx.arc(260, 240, 160, 0, Math.PI * 2);
+    ctx.arc(cx1, cy1, r1 * 1.25, 0, Math.PI * 2);
     ctx.fill();
 
-    // Secondary trailing cell
-    const grad2 = ctx.createRadialGradient(330, 310, 8, 330, 310, 95);
-    grad2.addColorStop(0, 'rgba(255, 100, 0, 0.85)');
-    grad2.addColorStop(0.4, 'rgba(255, 210, 0, 0.7)');
-    grad2.addColorStop(0.75, 'rgba(0, 200, 50, 0.5)');
-    grad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    // 2. Primary Convective Core (Green -> Yellow -> Orange -> Crimson -> Purple)
+    const grad1 = ctx.createRadialGradient(cx1, cy1, 6, cx1, cy1, r1);
+    if (peakFactor > 0.6) {
+      // Violent tornadic/severe core >65 dBZ (Magenta/Purple into Crimson)
+      grad1.addColorStop(0, 'rgba(236, 72, 153, 0.96)');    // >65 dBZ Severe Magenta
+      grad1.addColorStop(0.18, 'rgba(220, 38, 38, 0.95)');   // >60 dBZ Crimson Red
+    } else if (progress < 0.8) {
+      grad1.addColorStop(0, 'rgba(239, 68, 68, 0.92)');     // 55-60 dBZ Red
+      grad1.addColorStop(0.20, 'rgba(249, 115, 22, 0.88)');  // 50-55 dBZ Orange
+    } else {
+      // Dissipating stratiform rain late in forecast
+      grad1.addColorStop(0, 'rgba(249, 115, 22, 0.75)');    // Orange
+    }
+    grad1.addColorStop(0.32, 'rgba(249, 115, 22, 0.88)');   // 50-60 dBZ Orange
+    grad1.addColorStop(0.52, 'rgba(234, 179, 8, 0.82)');    // 40-50 dBZ Yellow
+    grad1.addColorStop(0.75, 'rgba(34, 197, 94, 0.72)');    // 30-40 dBZ Green
+    grad1.addColorStop(0.92, 'rgba(6, 182, 212, 0.50)');    // 20-30 dBZ Blue
+    grad1.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = grad1;
+    ctx.beginPath();
+    ctx.arc(cx1, cy1, r1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Secondary trailing convective cell (orbits cyclonically with wind shear)
+    const angle = 2.2 - progress * 0.9;
+    const dist = 85 + Math.sin(progress * Math.PI) * 25;
+    const cx2 = cx1 + Math.cos(angle) * dist;
+    const cy2 = cy1 + Math.sin(angle) * dist;
+    const r2 = 60 + progress * 35;
+
+    const grad2 = ctx.createRadialGradient(cx2, cy2, 5, cx2, cy2, r2);
+    grad2.addColorStop(0, 'rgba(249, 115, 22, 0.85)');     // Orange
+    grad2.addColorStop(0.35, 'rgba(234, 179, 8, 0.75)');   // Yellow
+    grad2.addColorStop(0.70, 'rgba(34, 197, 94, 0.60)');   // Green
+    grad2.addColorStop(0.92, 'rgba(6, 182, 212, 0.35)');   // Blue
+    grad2.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
     ctx.fillStyle = grad2;
     ctx.beginPath();
-    ctx.arc(330, 310, 95, 0, Math.PI * 2);
+    ctx.arc(cx2, cy2, r2, 0, Math.PI * 2);
     ctx.fill();
+
+    // 4. Inflow feeder band (Hook Echo / Squall Line feature)
+    ctx.save();
+    ctx.translate(cx1, cy1);
+    ctx.rotate(0.4 + progress * 0.6);
+    const grad3 = ctx.createRadialGradient(35, -25, 4, 35, -25, 80);
+    grad3.addColorStop(0, 'rgba(234, 179, 8, 0.65)');
+    grad3.addColorStop(0.5, 'rgba(34, 197, 94, 0.45)');
+    grad3.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad3;
+    ctx.beginPath();
+    ctx.ellipse(35, -25, 80, 38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     return canvas.toDataURL('image/png');
   } catch (e) {
@@ -60,6 +134,19 @@ export default function Dashboard() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const windCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const radarFramesCacheRef = useRef<string[]>([]);
+  const timeIdxRef = useRef<number>(timeIdx);
+  timeIdxRef.current = timeIdx;
+
+  // Pre-generate all 18 frames into memory on mount for instantaneous, zero-latency scrub
+  useEffect(() => {
+    const frames: string[] = [];
+    for (let i = 0; i <= 17; i++) {
+      frames.push(generateRadarFrame(i));
+    }
+    radarFramesCacheRef.current = frames;
+  }, []);
 
   const [precipitationData, setPrecipitationData] = useState([
     { time: 'T-30m', amount: 0, confidence: 100 },
@@ -250,15 +337,11 @@ export default function Dashboard() {
           );
 
           // Add radar source mapping the Bengaluru bounding box
+          const initialFrame = radarFramesCacheRef.current[timeIdx] || generateRadarFrame(timeIdx);
           map.current?.addSource('radar', {
             type: 'image',
-            url: `${API_BASE}/api/radar/frame/${timeIdx}`,
-            coordinates: [
-              [77.4, 13.2], // Top left (lon, lat)
-              [77.8, 13.2], // Top right
-              [77.8, 12.8], // Bottom right
-              [77.4, 12.8]  // Bottom left
-            ]
+            url: initialFrame,
+            coordinates: RADAR_BOUNDS
           });
 
           map.current?.addLayer({
@@ -266,7 +349,7 @@ export default function Dashboard() {
             type: 'raster',
             source: 'radar',
             paint: {
-              'raster-opacity': 0.75,
+              'raster-opacity': 0.78,
               'raster-fade-duration': 0
             }
           });
@@ -305,12 +388,12 @@ export default function Dashboard() {
 
         map.current.on('error', (e) => {
           console.error("Mapbox Error:", e);
-          if (map.current?.getSource('radar')) {
-            const fallback = getFallbackRadarDataUrl();
+          const source = map.current?.getSource('radar') as mapboxgl.ImageSource | undefined;
+          if (source) {
+            const fallback = radarFramesCacheRef.current[timeIdxRef.current] || generateRadarFrame(timeIdxRef.current);
             if (fallback) {
               try {
-                const source = map.current.getSource('radar') as mapboxgl.ImageSource;
-                source.updateImage({ url: fallback });
+                source.updateImage({ url: fallback, coordinates: RADAR_BOUNDS });
               } catch (_) {}
             }
           }
@@ -338,39 +421,90 @@ export default function Dashboard() {
     return () => clearInterval(playTimer);
   }, [isPlaying]);
 
-  // Update radar image when timeIdx changes with debounce to prevent texture locking
-  const pendingTimeIdxRef = useRef<number | null>(null);
-
+  // Synchronize radar overlay and telemetry whenever timeIdx changes
   useEffect(() => {
-    if (!map.current || !map.current.getSource('radar')) return;
+    timeIdxRef.current = timeIdx;
 
-    pendingTimeIdxRef.current = timeIdx;
-
-    const timer = setTimeout(() => {
-      if (pendingTimeIdxRef.current === null) return;
-      const targetIdx = pendingTimeIdxRef.current;
-      pendingTimeIdxRef.current = null;
-
-      const source = map.current?.getSource('radar') as mapboxgl.ImageSource | undefined;
-      if (!source) return;
-
-      try {
-        source.updateImage({
-          url: `${API_BASE}/api/radar/frame/${targetIdx}`
-        });
-      } catch (err) {
-        console.warn("Could not load backend radar frame, using fallback:", err);
-        const fallback = getFallbackRadarDataUrl();
-        if (fallback) {
+    // 1. Immediately update radar image on Mapbox (Zero-latency 60fps in both forward and backward directions)
+    if (map.current) {
+      const source = map.current.getSource('radar') as mapboxgl.ImageSource | undefined;
+      if (source) {
+        const frameUrl = radarFramesCacheRef.current[timeIdx] || generateRadarFrame(timeIdx);
+        if (frameUrl) {
           try {
-            source.updateImage({ url: fallback });
-          } catch (_) {}
+            source.updateImage({
+              url: frameUrl,
+              coordinates: RADAR_BOUNDS
+            });
+          } catch (err) {
+            console.warn("Could not update radar frame image:", err);
+          }
         }
       }
-    }, 35); // 35ms debounce guarantees responsive 60fps drag without Mapbox stalls
+    }
 
-    return () => clearTimeout(timer);
-  }, [timeIdx, API_BASE]);
+    // 2. Synchronize localized thermodynamics to storm advection
+    const progress = timeIdx / 17; // 0.0 to 1.0
+    const peakFactor = Math.max(0, 1 - Math.abs(progress - 0.45) * 2.0);
+
+    const temp = parseFloat((28.4 - peakFactor * 6.6 - progress * 1.5).toFixed(1));
+    const humidity = Math.min(99, Math.round(74 + peakFactor * 24 + progress * 8));
+    const wind = Math.round(24 + peakFactor * 38 - progress * 8);
+    const aqi = Math.round(68 - peakFactor * 32 - progress * 10);
+    const cape = Math.round(1450 - progress * 1100 - peakFactor * 200);
+    const windShear = Math.round(30 + peakFactor * 18 - progress * 10);
+
+    setTelemetry({
+      temp,
+      humidity,
+      wind,
+      aqi,
+      cape: Math.max(150, cape),
+      windShear
+    });
+
+    // 3. Dynamic severe warning alerts & precipitation surge
+    if (timeIdx <= 3) {
+      setAlerts([
+        {
+          title: "Tornadic Vortex Signature",
+          level: "Level 3 Severe",
+          confidence: 94,
+          eta: Math.max(5, 18 - timeIdx * 5)
+        },
+        {
+          title: "Precipitation Surge",
+          desc: "+42mm/hr expected in Sector 4 (Approaching from NW)"
+        }
+      ]);
+    } else if (timeIdx <= 10) {
+      setAlerts([
+        {
+          title: "Tornadic Vortex Signature",
+          level: "Level 4 Extreme (Core Over City)",
+          confidence: 98,
+          eta: 0
+        },
+        {
+          title: "Precipitation Surge",
+          desc: "+86mm/hr PEAK convective deluge across Central Bengaluru"
+        }
+      ]);
+    } else {
+      setAlerts([
+        {
+          title: "Convective Cell Receding",
+          level: "Level 2 Moderate",
+          confidence: 88,
+          eta: 0
+        },
+        {
+          title: "Stratiform Rain Shield",
+          desc: "+18mm/hr trailing rain shifting to SE border (Sarjapur/Anekal)"
+        }
+      ]);
+    }
+  }, [timeIdx]);
 
   useEffect(() => {
     if (!map.current) return;

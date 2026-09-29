@@ -19,7 +19,11 @@ const sanitizeUrl = (val?: string) => {
   return s.replace(/\/+$/, '');
 };
 
-const rawApiUrl = sanitizeUrl(process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:8000';
+const defaultApiUrl = process.env.NODE_ENV === 'production' || process.env.VERCEL
+  ? 'https://vajra-production-aad1.up.railway.app'
+  : 'http://localhost:8000';
+
+const rawApiUrl = sanitizeUrl(process.env.NEXT_API_URL || process.env.NEXT_PUBLIC_API_URL) || defaultApiUrl;
 const rawMapboxToken = (process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '').trim();
 
 const nextConfig: NextConfig = {
