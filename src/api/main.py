@@ -824,12 +824,23 @@ def predict(request: InferenceRequest):
         prob_map = outputs[0][0]
     else:
         # Graceful fallback: synthesize probability field from input channels
-        feature_slice = input_array[0, 0] if input_array.ndim == 4 else input_array[0]
+        if input_array.ndim == 4:
+            feature_slice = input_array[0, 0]
+        elif input_array.ndim == 3:
+            feature_slice = input_array[0]
+        elif input_array.ndim == 2:
+            feature_slice = input_array
+        else:
+            feature_slice = input_array.reshape((1, -1))
+
         min_v, max_v = feature_slice.min(), feature_slice.max()
         if max_v > min_v:
             prob_map = (feature_slice - min_v) / (max_v - min_v)
         else:
             prob_map = np.zeros_like(feature_slice)
+            
+        if prob_map.ndim == 1:
+            prob_map = prob_map.reshape((1, -1))
             
     h, w = prob_map.shape
     hot_zones = []
