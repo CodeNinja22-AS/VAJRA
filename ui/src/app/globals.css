@@ -131,126 +131,66 @@ body {
   pointer-events: auto;
 }
 
-/* Interactive City Markers on Mapbox */
-.vajra-city-marker {
+/* Minimal Map Weather Sublabels directly under city/place names */
+.vajra-sublabel-marker {
   cursor: pointer;
   user-select: none;
-  transform: translate(-50%, -50%);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), z-index 0.2s;
+  transform: translate(-50%, 0);
+  transition: transform 0.15s ease-out, filter 0.15s ease-out;
+  pointer-events: auto;
   z-index: 2;
 }
 
-.vajra-city-marker:hover,
-.vajra-city-marker.active {
+.vajra-sublabel-marker:hover,
+.vajra-sublabel-marker.active {
   z-index: 10;
-  transform: translate(-50%, -50%) scale(1.05);
+  transform: translate(-50%, -2px) scale(1.08);
 }
 
-.vajra-marker-card {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  padding: 6px 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-  display: flex;
-  flex-direction: column;
+.vajra-map-sublabel {
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
-  min-width: 140px;
-  max-width: 280px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #fff;
-}
-
-.vajra-city-marker.active .vajra-marker-card {
-  border-color: var(--color-precip);
-  box-shadow: 0 0 15px rgba(0, 180, 255, 0.4), 0 4px 25px rgba(0, 0, 0, 0.6);
-}
-
-.vajra-marker-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.vajra-marker-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.vajra-marker-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.vajra-marker-name {
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  letter-spacing: 0.3px;
-}
-
-.vajra-marker-temp {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-}
-
-.vajra-marker-badge {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-}
-
-/* The 2 dynamic points below city name revealed on zoom */
-.vajra-marker-points {
-  display: none;
-  flex-direction: column;
-  gap: 3px;
-  padding-top: 4px;
-  margin-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 10.5px;
-  line-height: 1.35;
-  color: #cbd5e1;
-  animation: fadeInPoints 0.3s ease-out;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(10, 14, 23, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 2px #000;
+  transition: all 0.2s ease-in-out;
 }
 
-/* When map reaches zoom threshold, show the 2 points */
-.show-points .vajra-marker-points {
-  display: flex;
+.vajra-map-sublabel.status-danger {
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25), 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.vajra-marker-point-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
+.vajra-map-sublabel.status-warning {
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2), 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.vajra-marker-point-bullet {
-  color: var(--color-precip);
-  font-weight: bold;
-  font-size: 11px;
-  line-height: 1;
+.vajra-map-sublabel.status-safe {
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2), 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-@keyframes fadeInPoints {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.vajra-sublabel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  flex-shrink: 0;
 }
 
 .radar-ring {

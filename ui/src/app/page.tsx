@@ -24,9 +24,10 @@ export interface CityWeatherItem {
   windShear: number;
   rainRate: string;
   threat: 'Critical' | 'Severe' | 'Moderate' | 'Low' | 'Clear';
+  dangerLevel: 'DANGER' | 'WARNING' | 'SAFE';
+  statusClass: 'status-danger' | 'status-warning' | 'status-safe';
   color: string;
-  minZoom: number; // min zoom to show marker on map
-  pointsZoom: number; // zoom threshold where the 2 key points expand
+  minZoom: number; // min zoom to show sublabel on map
   point1: string;
   point2: string;
   radarEcho: string;
@@ -35,337 +36,143 @@ export interface CityWeatherItem {
 }
 
 export const CITIES_DATA: CityWeatherItem[] = [
+  // Local Metropolitan Bengaluru Localities (From Screenshot: Mahadevapura, Indiranagar, etc.)
   {
-    id: 'bengaluru',
-    name: 'Bengaluru',
-    state: 'Karnataka',
-    coordinates: [77.5946, 12.9716],
-    temp: 27.7,
-    humidity: 76,
-    wind: 28,
-    aqi: 65,
-    cape: 1430,
-    windShear: 32,
-    rainRate: '78 mm/hr',
-    threat: 'Severe',
-    color: '#ef4444',
-    minZoom: 3.0,
-    pointsZoom: 8.0,
-    point1: 'Convective Core: 68 dBZ (Vortex approaching from NW)',
-    point2: 'Severe Flood: Bellandur & Silk Board on Level 4 Red',
-    radarEcho: '68 dBZ Supercell',
-    alerts: [
-      { title: 'Tornadic Vortex Signature', level: 'Level 3 Severe', confidence: 94, eta: 18 },
-      { title: 'Precipitation Surge', desc: '+42mm/hr expected in Sector 4 (Approaching from NW)' }
-    ],
-    precipitation: [
-      { time: 'T-30m', amount: 0, confidence: 100 },
-      { time: 'T-15m', amount: 4, confidence: 100 },
-      { time: 'NOW', amount: 22, confidence: 100 },
-      { time: 'T+15m', amount: 58, confidence: 96 },
-      { time: 'T+30m', amount: 42, confidence: 88 },
-      { time: 'T+45m', amount: 18, confidence: 74 },
-      { time: 'T+60m', amount: 4, confidence: 60 },
-    ]
-  },
-  {
-    id: 'delhi',
-    name: 'Delhi-NCR',
-    state: 'National Capital Region',
-    coordinates: [77.2090, 28.6139],
-    temp: 33.5,
-    humidity: 62,
-    wind: 38,
-    aqi: 142,
-    cape: 1200,
-    windShear: 28,
-    rainRate: '35 mm/hr',
-    threat: 'Moderate',
-    color: '#f59e0b',
-    minZoom: 3.0,
-    pointsZoom: 8.0,
-    point1: 'Squall Line Front: 42 kt gust front approaching IGI Airport',
-    point2: 'Thermal Cap (-65 J/kg CIN): Severe hail potential if broken',
-    radarEcho: '48 dBZ Multi-cell',
-    alerts: [
-      { title: 'Dust Squall & Wind Shear Advisory', level: 'Level 2 Moderate', confidence: 85, eta: 25 },
-      { title: 'Runway Visibility Alert', desc: 'Crosswind 26 kt with blowing dust at VIDP' }
-    ],
-    precipitation: [
-      { time: 'T-30m', amount: 0, confidence: 100 },
-      { time: 'T-15m', amount: 0, confidence: 100 },
-      { time: 'NOW', amount: 8, confidence: 95 },
-      { time: 'T+15m', amount: 26, confidence: 90 },
-      { time: 'T+30m', amount: 35, confidence: 80 },
-      { time: 'T+45m', amount: 14, confidence: 70 },
-      { time: 'T+60m', amount: 2, confidence: 60 },
-    ]
-  },
-  {
-    id: 'mumbai',
-    name: 'Mumbai',
-    state: 'Maharashtra',
-    coordinates: [72.8777, 19.0760],
-    temp: 29.8,
-    humidity: 88,
-    wind: 34,
-    aqi: 58,
-    cape: 2400,
-    windShear: 35,
-    rainRate: '86 mm/hr',
+    id: 'mahadevapura',
+    name: 'Mahadevapura',
+    state: 'Bengaluru East',
+    coordinates: [77.6953, 12.9918],
+    temp: 27.2,
+    humidity: 86,
+    wind: 32,
+    aqi: 60,
+    cape: 1780,
+    windShear: 36,
+    rainRate: '72 mm/hr',
     threat: 'Critical',
-    color: '#dc2626',
-    minZoom: 3.0,
-    pointsZoom: 8.0,
-    point1: 'Monsoon Rainband: Torrential deluge exceeding 86 mm/hr',
-    point2: 'High Tide Warning: Storm runoff backed up along Mithi River',
-    radarEcho: '72 dBZ Convective Cluster',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
+    minZoom: 9.5,
+    point1: 'Peak Convective Core: 72 mm/hr deluge over Ring Road corridor',
+    point2: 'Flash Inundation Warning: Low-lying rail underpass waterlogged',
+    radarEcho: '66 dBZ Deluge',
     alerts: [
-      { title: 'High Tide Convective Surge', level: 'Level 4 Critical Red', confidence: 98, eta: 10 },
-      { title: 'Urban Flash Inundation', desc: 'Central & Western transit lines face hydroplane risk' }
+      { title: 'Extreme Convective Core Over Mahadevapura', level: 'Level 4 Critical Red', confidence: 97, eta: 5 },
+      { title: 'Rail Underpass Flooding', desc: 'Avoid Outer Ring Road low-lying bridges' }
     ],
     precipitation: [
-      { time: 'T-30m', amount: 15, confidence: 100 },
-      { time: 'T-15m', amount: 38, confidence: 100 },
-      { time: 'NOW', amount: 72, confidence: 98 },
-      { time: 'T+15m', amount: 86, confidence: 95 },
-      { time: 'T+30m', amount: 64, confidence: 90 },
-      { time: 'T+45m', amount: 40, confidence: 80 },
-      { time: 'T+60m', amount: 25, confidence: 70 },
+      { time: 'T-30m', amount: 5, confidence: 100 },
+      { time: 'T-15m', amount: 24, confidence: 100 },
+      { time: 'NOW', amount: 58, confidence: 98 },
+      { time: 'T+15m', amount: 72, confidence: 96 },
+      { time: 'T+30m', amount: 50, confidence: 90 },
+      { time: 'T+45m', amount: 25, confidence: 78 },
+      { time: 'T+60m', amount: 8, confidence: 60 },
     ]
   },
   {
-    id: 'chennai',
-    name: 'Chennai',
-    state: 'Tamil Nadu',
-    coordinates: [80.2707, 13.0827],
-    temp: 31.2,
-    humidity: 82,
-    wind: 26,
-    aqi: 62,
-    cape: 1850,
-    windShear: 24,
-    rainRate: '48 mm/hr',
-    threat: 'Moderate',
-    color: '#f59e0b',
-    minZoom: 3.5,
-    pointsZoom: 8.0,
-    point1: 'Bay of Bengal Inflow: Deep moisture column (58.2mm PWAT)',
-    point2: 'Basin Sluice Alert: Coastal storm drains armed at 85% capacity',
-    radarEcho: '54 dBZ Rainband',
+    id: 'indiranagar',
+    name: 'Indiranagar',
+    state: 'Bengaluru East',
+    coordinates: [77.6412, 12.9784],
+    temp: 27.0,
+    humidity: 84,
+    wind: 28,
+    aqi: 56,
+    cape: 1650,
+    windShear: 32,
+    rainRate: '64 mm/hr',
+    threat: 'Severe',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
+    minZoom: 9.5,
+    point1: '100ft Road Inundation: 0.8m runoff pooling at 12th Main junction',
+    point2: 'Storm Sump Telemetry: 3/3 municipal pumps active on standby',
+    radarEcho: '62 dBZ Squall',
     alerts: [
-      { title: 'Coastal Convergence Inflow', level: 'Level 2 Moderate', confidence: 88, eta: 30 },
-      { title: 'Low-Lying Sump Alert', desc: 'Velachery & Adyar flood basins on standby' }
+      { title: 'Severe Rain Surge in Indiranagar', level: 'Level 3 Severe', confidence: 94, eta: 10 },
+      { title: 'Surface Runoff Advisory', desc: 'Road ponding active; vehicle transit slowed' }
     ],
     precipitation: [
       { time: 'T-30m', amount: 2, confidence: 100 },
-      { time: 'T-15m', amount: 10, confidence: 100 },
-      { time: 'NOW', amount: 28, confidence: 95 },
-      { time: 'T+15m', amount: 48, confidence: 90 },
-      { time: 'T+30m', amount: 36, confidence: 82 },
-      { time: 'T+45m', amount: 16, confidence: 72 },
-      { time: 'T+60m', amount: 5, confidence: 60 },
+      { time: 'T-15m', amount: 16, confidence: 100 },
+      { time: 'NOW', amount: 48, confidence: 96 },
+      { time: 'T+15m', amount: 64, confidence: 94 },
+      { time: 'T+30m', amount: 42, confidence: 86 },
+      { time: 'T+45m', amount: 20, confidence: 72 },
+      { time: 'T+60m', amount: 6, confidence: 58 },
     ]
   },
   {
-    id: 'kolkata',
-    name: 'Kolkata',
-    state: 'West Bengal',
-    coordinates: [88.3639, 22.5726],
-    temp: 30.4,
+    id: 'koramangala',
+    name: 'Koramangala (Ward 151)',
+    state: 'Bengaluru South',
+    coordinates: [77.6245, 12.9352],
+    temp: 27.3,
     humidity: 85,
-    wind: 30,
-    aqi: 74,
-    cape: 2100,
-    windShear: 31,
-    rainRate: '62 mm/hr',
-    threat: 'Severe',
-    color: '#ef4444',
-    minZoom: 3.5,
-    pointsZoom: 8.0,
-    point1: "Nor'wester Squall: Multi-cell thunderstorm tracking SE at 45 km/h",
-    point2: 'Lightning Surge: Extreme cloud-to-ground flash rate (16/min)',
-    radarEcho: '64 dBZ Norwester',
-    alerts: [
-      { title: 'Kalbaishakhi Thunderstorm Warning', level: 'Level 3 Severe', confidence: 92, eta: 15 },
-      { title: 'Gale Inflow Alert', desc: 'Gusts up to 65 km/h expected across Hooghly basin' }
-    ],
-    precipitation: [
-      { time: 'T-30m', amount: 0, confidence: 100 },
-      { time: 'T-15m', amount: 8, confidence: 100 },
-      { time: 'NOW', amount: 34, confidence: 96 },
-      { time: 'T+15m', amount: 62, confidence: 94 },
-      { time: 'T+30m', amount: 48, confidence: 85 },
-      { time: 'T+45m', amount: 20, confidence: 70 },
-      { time: 'T+60m', amount: 6, confidence: 55 },
-    ]
-  },
-  {
-    id: 'hyderabad',
-    name: 'Hyderabad',
-    state: 'Telangana',
-    coordinates: [78.4867, 17.3850],
-    temp: 31.8,
-    humidity: 70,
-    wind: 22,
-    aqi: 82,
-    cape: 1350,
-    windShear: 25,
-    rainRate: '42 mm/hr',
-    threat: 'Moderate',
-    color: '#f59e0b',
-    minZoom: 4.0,
-    pointsZoom: 8.0,
-    point1: 'Isolated Convective Cell: 52 dBZ radar echo developing over Hitec City',
-    point2: 'Microburst Risk: Downdraft shear -14 kt on runway approach',
-    radarEcho: '52 dBZ Cell',
-    alerts: [
-      { title: 'Convective Cell Advisory', level: 'Level 2 Moderate', confidence: 82, eta: 35 },
-      { title: 'Underpass Sump Alert', desc: 'Begumpet and Gachibowli drainage units activated' }
-    ],
-    precipitation: [
-      { time: 'T-30m', amount: 0, confidence: 100 },
-      { time: 'T-15m', amount: 2, confidence: 100 },
-      { time: 'NOW', amount: 16, confidence: 90 },
-      { time: 'T+15m', amount: 42, confidence: 86 },
-      { time: 'T+30m', amount: 30, confidence: 78 },
-      { time: 'T+45m', amount: 12, confidence: 65 },
-      { time: 'T+60m', amount: 0, confidence: 50 },
-    ]
-  },
-  {
-    id: 'pune',
-    name: 'Pune',
-    state: 'Maharashtra',
-    coordinates: [73.8567, 18.5204],
-    temp: 28.1,
-    humidity: 79,
-    wind: 20,
+    wind: 26,
     aqi: 54,
-    cape: 1100,
-    windShear: 22,
-    rainRate: '28 mm/hr',
-    threat: 'Low',
-    color: '#10b981',
-    minZoom: 4.5,
-    pointsZoom: 8.0,
-    point1: 'Ghats Orographic Uplift: Rainbands drifting east towards city basin',
-    point2: 'River Catchment: Mutha spillway inflow nominal (+0.4m depth)',
-    radarEcho: '38 dBZ Stratiform',
-    alerts: [
-      { title: 'Orographic Shower Alert', level: 'Level 1 Low', confidence: 78, eta: 40 },
-      { title: 'Surface Runoff Advisory', desc: 'Mild ponding observed near Shivaji Nagar' }
-    ],
-    precipitation: [
-      { time: 'T-30m', amount: 0, confidence: 100 },
-      { time: 'T-15m', amount: 5, confidence: 100 },
-      { time: 'NOW', amount: 18, confidence: 95 },
-      { time: 'T+15m', amount: 28, confidence: 88 },
-      { time: 'T+30m', amount: 20, confidence: 80 },
-      { time: 'T+45m', amount: 10, confidence: 70 },
-      { time: 'T+60m', amount: 2, confidence: 60 },
-    ]
-  },
-  {
-    id: 'ahmedabad',
-    name: 'Ahmedabad',
-    state: 'Gujarat',
-    coordinates: [72.5714, 23.0225],
-    temp: 35.0,
-    humidity: 54,
-    wind: 18,
-    aqi: 110,
-    cape: 850,
-    windShear: 18,
-    rainRate: '12 mm/hr',
-    threat: 'Low',
-    color: '#10b981',
-    minZoom: 4.5,
-    pointsZoom: 8.0,
-    point1: 'High LCL Cloud Base (1.8km): Sub-cloud virga evaporating rain',
-    point2: 'Thermal Boundary: Dust suspension with visibility at 3.5 km',
-    radarEcho: '28 dBZ Dry Echo',
-    alerts: [
-      { title: 'Dry Thermal Boundary Layer', level: 'Level 1 Low', confidence: 70, eta: 50 },
-      { title: 'Particulate Suspension', desc: 'AQI elevated; no severe flash flooding expected' }
-    ],
-    precipitation: [
-      { time: 'T-30m', amount: 0, confidence: 100 },
-      { time: 'T-15m', amount: 0, confidence: 100 },
-      { time: 'NOW', amount: 2, confidence: 85 },
-      { time: 'T+15m', amount: 12, confidence: 80 },
-      { time: 'T+30m', amount: 8, confidence: 70 },
-      { time: 'T+45m', amount: 2, confidence: 60 },
-      { time: 'T+60m', amount: 0, confidence: 50 },
-    ]
-  },
-  {
-    id: 'kochi',
-    name: 'Kochi',
-    state: 'Kerala',
-    coordinates: [76.2673, 9.9312],
-    temp: 28.6,
-    humidity: 91,
-    wind: 24,
-    aqi: 42,
-    cape: 1650,
-    windShear: 26,
+    cape: 1710,
+    windShear: 30,
     rainRate: '54 mm/hr',
-    threat: 'Moderate',
-    color: '#f59e0b',
-    minZoom: 4.5,
-    pointsZoom: 8.0,
-    point1: 'Arabian Sea Plume: Heavy tropical warm rain process active',
-    point2: 'Periyar Basin: Hydrological runoff alert level 1 engaged',
-    radarEcho: '56 dBZ Oceanic Cell',
+    threat: 'Severe',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
+    minZoom: 9.5,
+    point1: '4th Block Storm Drain: Inflow nearing 82% sluice gate capacity',
+    point2: 'BESCOM Substation Barrier: Automated flood barrier deployed',
+    radarEcho: '58 dBZ Cell',
     alerts: [
-      { title: 'Coastal Squall Warning', level: 'Level 2 Moderate', confidence: 89, eta: 20 },
-      { title: 'Backwater Runoff Alert', desc: 'Port container transit gates on waterlogged notice' }
+      { title: 'Storm Drain Sluice Armed', level: 'Level 3 Severe', confidence: 92, eta: 12 },
+      { title: '4th Block Waterlogging Alert', desc: 'Drainage pumps activated at Sony World junction' }
     ],
     precipitation: [
-      { time: 'T-30m', amount: 8, confidence: 100 },
-      { time: 'T-15m', amount: 22, confidence: 100 },
-      { time: 'NOW', amount: 44, confidence: 95 },
-      { time: 'T+15m', amount: 54, confidence: 90 },
-      { time: 'T+30m', amount: 38, confidence: 85 },
-      { time: 'T+45m', amount: 20, confidence: 75 },
-      { time: 'T+60m', amount: 8, confidence: 65 },
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 12, confidence: 100 },
+      { time: 'NOW', amount: 42, confidence: 96 },
+      { time: 'T+15m', amount: 54, confidence: 92 },
+      { time: 'T+30m', amount: 36, confidence: 84 },
+      { time: 'T+45m', amount: 16, confidence: 70 },
+      { time: 'T+60m', amount: 4, confidence: 55 },
     ]
   },
   {
-    id: 'guwahati',
-    name: 'Guwahati',
-    state: 'Assam',
-    coordinates: [91.7362, 26.1445],
-    temp: 27.2,
-    humidity: 86,
-    wind: 16,
-    aqi: 48,
-    cape: 1950,
-    windShear: 29,
+    id: 'marathahalli',
+    name: 'Marathahalli',
+    state: 'Bengaluru East',
+    coordinates: [77.7011, 12.9591],
+    temp: 27.1,
+    humidity: 87,
+    wind: 30,
+    aqi: 58,
+    cape: 1690,
+    windShear: 34,
     rainRate: '68 mm/hr',
-    threat: 'Severe',
+    threat: 'Critical',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
     color: '#ef4444',
-    minZoom: 4.5,
-    pointsZoom: 8.0,
-    point1: 'Brahmaputra Valley Deluge: Stationary cloudburst cell over basin',
-    point2: 'Landslide Warning: Hillslope soil saturation index at 92%',
-    radarEcho: '66 dBZ Stationary',
+    minZoom: 9.5,
+    point1: 'ORR Underpass Submerged: 1.2m flood depth; traffic diverted',
+    point2: 'Convective Cell Vortex: Gust front wind shear 34 kt measured',
+    radarEcho: '64 dBZ Core',
     alerts: [
-      { title: 'Stationary Cloudburst Alert', level: 'Level 3 Severe', confidence: 94, eta: 12 },
-      { title: 'Hillslope Soil Saturation', desc: 'Critical slope runoff warning along NH27' }
+      { title: 'Underpass Submerged Alert', level: 'Level 4 Critical Red', confidence: 96, eta: 7 },
+      { title: 'ORR Multiplex Junction Flooded', desc: 'Emergency traffic diversions active' }
     ],
     precipitation: [
-      { time: 'T-30m', amount: 10, confidence: 100 },
-      { time: 'T-15m', amount: 32, confidence: 100 },
-      { time: 'NOW', amount: 56, confidence: 98 },
-      { time: 'T+15m', amount: 68, confidence: 94 },
-      { time: 'T+30m', amount: 52, confidence: 88 },
-      { time: 'T+45m', amount: 30, confidence: 78 },
-      { time: 'T+60m', amount: 14, confidence: 65 },
+      { time: 'T-30m', amount: 4, confidence: 100 },
+      { time: 'T-15m', amount: 22, confidence: 100 },
+      { time: 'NOW', amount: 54, confidence: 98 },
+      { time: 'T+15m', amount: 68, confidence: 95 },
+      { time: 'T+30m', amount: 46, confidence: 88 },
+      { time: 'T+45m', amount: 22, confidence: 76 },
+      { time: 'T+60m', amount: 6, confidence: 60 },
     ]
   },
-  // Detailed Metropolitan Sub-Sectors (Visible on higher zoom ratios)
   {
     id: 'bellandur',
     name: 'Bellandur (Ward 150)',
@@ -379,9 +186,10 @@ export const CITIES_DATA: CityWeatherItem[] = [
     windShear: 38,
     rainRate: '78 mm/hr',
     threat: 'Critical',
-    color: '#dc2626',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
     minZoom: 9.5,
-    pointsZoom: 10.5,
     point1: 'Peak Inundation: 1.4m runoff at ORR underpass',
     point2: 'Drainage Action: 5/6 automated flood pumps active',
     radarEcho: '68 dBZ Deluge',
@@ -412,9 +220,10 @@ export const CITIES_DATA: CityWeatherItem[] = [
     windShear: 34,
     rainRate: '65 mm/hr',
     threat: 'Critical',
-    color: '#dc2626',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
     minZoom: 9.5,
-    pointsZoom: 10.5,
     point1: 'Underpass Waterlogged: 1.1m depth; vehicles diverted',
     point2: 'Runoff Convergence: Madiwala lake overflow armed',
     radarEcho: '64 dBZ Vortex',
@@ -435,7 +244,7 @@ export const CITIES_DATA: CityWeatherItem[] = [
   {
     id: 'whitefield',
     name: 'Whitefield - ITPL',
-    state: 'Bengaluru Urban',
+    state: 'Bengaluru East',
     coordinates: [77.7499, 12.9698],
     temp: 28.0,
     humidity: 75,
@@ -445,9 +254,10 @@ export const CITIES_DATA: CityWeatherItem[] = [
     windShear: 26,
     rainRate: '32 mm/hr',
     threat: 'Moderate',
+    dangerLevel: 'WARNING',
+    statusClass: 'status-warning',
     color: '#f59e0b',
     minZoom: 9.5,
-    pointsZoom: 10.5,
     point1: 'Downwind Cloud Shield: Light 32 mm/hr rainband',
     point2: 'Transit Corridor: Metro Purple Line operating nominal',
     radarEcho: '44 dBZ Moderate',
@@ -468,7 +278,7 @@ export const CITIES_DATA: CityWeatherItem[] = [
   {
     id: 'hebbal',
     name: 'Hebbal Flyover (Ward 7)',
-    state: 'Bengaluru Urban',
+    state: 'Bengaluru North',
     coordinates: [77.5970, 13.0358],
     temp: 27.4,
     humidity: 80,
@@ -478,9 +288,10 @@ export const CITIES_DATA: CityWeatherItem[] = [
     windShear: 30,
     rainRate: '48 mm/hr',
     threat: 'Severe',
-    color: '#ef4444',
+    dangerLevel: 'WARNING',
+    statusClass: 'status-warning',
+    color: '#f59e0b',
     minZoom: 9.5,
-    pointsZoom: 10.5,
     point1: 'Flyover Inflow: 48 mm/hr cell passing northwards',
     point2: 'Storm Drain Level: 0.6m runoff; pumps on standby',
     radarEcho: '56 dBZ Squall',
@@ -499,6 +310,142 @@ export const CITIES_DATA: CityWeatherItem[] = [
     ]
   },
   {
+    id: 'yelahanka',
+    name: 'Yelahanka Basin',
+    state: 'Bengaluru North',
+    coordinates: [77.5963, 13.1007],
+    temp: 28.4,
+    humidity: 72,
+    wind: 18,
+    aqi: 50,
+    cape: 980,
+    windShear: 18,
+    rainRate: '14 mm/hr',
+    threat: 'Low',
+    dangerLevel: 'SAFE',
+    statusClass: 'status-safe',
+    color: '#10b981',
+    minZoom: 9.5,
+    point1: 'Clear Lake Basin: Moderate stratiform shower passed',
+    point2: 'Inundation Status: Lake overflow sluices at 45% nominal',
+    radarEcho: '30 dBZ Light Rain',
+    alerts: [
+      { title: 'Conditions Nominal', level: 'Level 1 Safe', confidence: 95, eta: 0 },
+      { title: 'No Threat Active', desc: 'Storm core diverted southeast of Yelahanka' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 2, confidence: 100 },
+      { time: 'NOW', amount: 8, confidence: 95 },
+      { time: 'T+15m', amount: 14, confidence: 90 },
+      { time: 'T+30m', amount: 6, confidence: 80 },
+      { time: 'T+45m', amount: 0, confidence: 70 },
+      { time: 'T+60m', amount: 0, confidence: 60 },
+    ]
+  },
+  {
+    id: 'peenya',
+    name: 'Peenya Industrial',
+    state: 'Bengaluru West',
+    coordinates: [77.5273, 13.0285],
+    temp: 28.6,
+    humidity: 70,
+    wind: 16,
+    aqi: 68,
+    cape: 920,
+    windShear: 16,
+    rainRate: '8 mm/hr',
+    threat: 'Low',
+    dangerLevel: 'SAFE',
+    statusClass: 'status-safe',
+    color: '#10b981',
+    minZoom: 9.5,
+    point1: 'Industrial Corridor: Dry boundary layer; light sprinkles',
+    point2: 'Transit Clear: Tumkur Road flyover unobstructed',
+    radarEcho: '24 dBZ Virga',
+    alerts: [
+      { title: 'Minimal Weather Impact', level: 'Level 1 Safe', confidence: 98, eta: 0 },
+      { title: 'All Roads Passable', desc: 'No convective storms over Western industrial belt' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 0, confidence: 100 },
+      { time: 'NOW', amount: 4, confidence: 95 },
+      { time: 'T+15m', amount: 8, confidence: 90 },
+      { time: 'T+30m', amount: 2, confidence: 80 },
+      { time: 'T+45m', amount: 0, confidence: 70 },
+      { time: 'T+60m', amount: 0, confidence: 60 },
+    ]
+  },
+  {
+    id: 'jp-nagar',
+    name: 'J. P. Nagar',
+    state: 'Bengaluru South',
+    coordinates: [77.5855, 12.9063],
+    temp: 28.5,
+    humidity: 74,
+    wind: 19,
+    aqi: 56,
+    cape: 1050,
+    windShear: 20,
+    rainRate: '18 mm/hr',
+    threat: 'Low',
+    dangerLevel: 'SAFE',
+    statusClass: 'status-safe',
+    color: '#10b981',
+    minZoom: 9.5,
+    point1: 'Moderate Scattered Showers: Inflow rate 18 mm/hr nominal',
+    point2: 'Local Underpass: Clear of standing flood water',
+    radarEcho: '32 dBZ Showers',
+    alerts: [
+      { title: 'Scattered Showers Only', level: 'Level 1 Safe', confidence: 92, eta: 0 },
+      { title: 'Normal Conditions', desc: 'Storm core situated 8km northeast' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 4, confidence: 100 },
+      { time: 'NOW', amount: 10, confidence: 95 },
+      { time: 'T+15m', amount: 18, confidence: 90 },
+      { time: 'T+30m', amount: 12, confidence: 82 },
+      { time: 'T+45m', amount: 4, confidence: 70 },
+      { time: 'T+60m', amount: 0, confidence: 60 },
+    ]
+  },
+  {
+    id: 'electronic-city',
+    name: 'Electronic City',
+    state: 'Bengaluru South',
+    coordinates: [77.6749, 12.8399],
+    temp: 28.8,
+    humidity: 68,
+    wind: 16,
+    aqi: 54,
+    cape: 890,
+    windShear: 15,
+    rainRate: '6 mm/hr',
+    threat: 'Low',
+    dangerLevel: 'SAFE',
+    statusClass: 'status-safe',
+    color: '#10b981',
+    minZoom: 9.5,
+    point1: 'Dry Boundary Air: Elevated expressway completely dry',
+    point2: 'No Waterlogging: Transit corridors fully operational',
+    radarEcho: '18 dBZ Clear',
+    alerts: [
+      { title: 'Clear Corridor', level: 'Level 1 Safe', confidence: 99, eta: 0 },
+      { title: 'Nominal Operations', desc: 'No rain forecasted for next 60 minutes' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 0, confidence: 100 },
+      { time: 'NOW', amount: 0, confidence: 98 },
+      { time: 'T+15m', amount: 6, confidence: 90 },
+      { time: 'T+30m', amount: 4, confidence: 80 },
+      { time: 'T+45m', amount: 0, confidence: 70 },
+      { time: 'T+60m', amount: 0, confidence: 60 },
+    ]
+  },
+  {
     id: 'vobl-airport',
     name: 'Kempegowda Int Airport (VOBL)',
     state: 'Bengaluru Aviation',
@@ -511,9 +458,10 @@ export const CITIES_DATA: CityWeatherItem[] = [
     windShear: 42,
     rainRate: '60 mm/hr',
     threat: 'Severe',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
     color: '#ef4444',
     minZoom: 9.0,
-    pointsZoom: 10.0,
     point1: 'Runway Microburst: -18 kt shear alert on 3nm final',
     point2: 'ATC Go-Around: Crosswind 21 kt gusting to 38 kt',
     radarEcho: '62 dBZ Microburst',
@@ -529,6 +477,347 @@ export const CITIES_DATA: CityWeatherItem[] = [
       { time: 'T+30m', amount: 40, confidence: 86 },
       { time: 'T+45m', amount: 18, confidence: 72 },
       { time: 'T+60m', amount: 4, confidence: 55 },
+    ]
+  },
+  // Major Indian Cities (Visible at Lower / Regional Zoom)
+  {
+    id: 'bengaluru',
+    name: 'Bengaluru',
+    state: 'Karnataka',
+    coordinates: [77.5946, 12.9716],
+    temp: 27.7,
+    humidity: 76,
+    wind: 28,
+    aqi: 65,
+    cape: 1430,
+    windShear: 32,
+    rainRate: '78 mm/hr',
+    threat: 'Severe',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
+    minZoom: 3.5,
+    point1: 'Convective Core: 68 dBZ (Vortex approaching from NW)',
+    point2: 'Severe Flood: Bellandur & Silk Board on Level 4 Red',
+    radarEcho: '68 dBZ Supercell',
+    alerts: [
+      { title: 'Tornadic Vortex Signature', level: 'Level 3 Severe', confidence: 94, eta: 18 },
+      { title: 'Precipitation Surge', desc: '+42mm/hr expected in Sector 4 (Approaching from NW)' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 4, confidence: 100 },
+      { time: 'NOW', amount: 22, confidence: 100 },
+      { time: 'T+15m', amount: 58, confidence: 96 },
+      { time: 'T+30m', amount: 42, confidence: 88 },
+      { time: 'T+45m', amount: 18, confidence: 74 },
+      { time: 'T+60m', amount: 4, confidence: 60 },
+    ]
+  },
+  {
+    id: 'delhi',
+    name: 'Delhi-NCR',
+    state: 'National Capital Region',
+    coordinates: [77.2090, 28.6139],
+    temp: 33.5,
+    humidity: 62,
+    wind: 38,
+    aqi: 142,
+    cape: 1200,
+    windShear: 28,
+    rainRate: '35 mm/hr',
+    threat: 'Moderate',
+    dangerLevel: 'WARNING',
+    statusClass: 'status-warning',
+    color: '#f59e0b',
+    minZoom: 3.5,
+    point1: 'Squall Line Front: 42 kt gust front approaching IGI Airport',
+    point2: 'Thermal Cap (-65 J/kg CIN): Severe hail potential if broken',
+    radarEcho: '48 dBZ Multi-cell',
+    alerts: [
+      { title: 'Dust Squall & Wind Shear Advisory', level: 'Level 2 Moderate', confidence: 85, eta: 25 },
+      { title: 'Runway Visibility Alert', desc: 'Crosswind 26 kt with blowing dust at VIDP' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 0, confidence: 100 },
+      { time: 'NOW', amount: 8, confidence: 95 },
+      { time: 'T+15m', amount: 26, confidence: 90 },
+      { time: 'T+30m', amount: 35, confidence: 80 },
+      { time: 'T+45m', amount: 14, confidence: 70 },
+      { time: 'T+60m', amount: 2, confidence: 60 },
+    ]
+  },
+  {
+    id: 'mumbai',
+    name: 'Mumbai',
+    state: 'Maharashtra',
+    coordinates: [72.8777, 19.0760],
+    temp: 29.8,
+    humidity: 88,
+    wind: 34,
+    aqi: 58,
+    cape: 2400,
+    windShear: 35,
+    rainRate: '86 mm/hr',
+    threat: 'Critical',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#dc2626',
+    minZoom: 3.5,
+    point1: 'Monsoon Rainband: Torrential deluge exceeding 86 mm/hr',
+    point2: 'High Tide Warning: Storm runoff backed up along Mithi River',
+    radarEcho: '72 dBZ Convective Cluster',
+    alerts: [
+      { title: 'High Tide Convective Surge', level: 'Level 4 Critical Red', confidence: 98, eta: 10 },
+      { title: 'Urban Flash Inundation', desc: 'Central & Western transit lines face hydroplane risk' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 15, confidence: 100 },
+      { time: 'T-15m', amount: 38, confidence: 100 },
+      { time: 'NOW', amount: 72, confidence: 98 },
+      { time: 'T+15m', amount: 86, confidence: 95 },
+      { time: 'T+30m', amount: 64, confidence: 90 },
+      { time: 'T+45m', amount: 40, confidence: 80 },
+      { time: 'T+60m', amount: 25, confidence: 70 },
+    ]
+  },
+  {
+    id: 'chennai',
+    name: 'Chennai',
+    state: 'Tamil Nadu',
+    coordinates: [80.2707, 13.0827],
+    temp: 31.2,
+    humidity: 82,
+    wind: 26,
+    aqi: 62,
+    cape: 1850,
+    windShear: 24,
+    rainRate: '48 mm/hr',
+    threat: 'Moderate',
+    dangerLevel: 'WARNING',
+    statusClass: 'status-warning',
+    color: '#f59e0b',
+    minZoom: 4.0,
+    point1: 'Bay of Bengal Inflow: Deep moisture column (58.2mm PWAT)',
+    point2: 'Basin Sluice Alert: Coastal storm drains armed at 85% capacity',
+    radarEcho: '54 dBZ Rainband',
+    alerts: [
+      { title: 'Coastal Convergence Inflow', level: 'Level 2 Moderate', confidence: 88, eta: 30 },
+      { title: 'Low-Lying Sump Alert', desc: 'Velachery & Adyar flood basins on standby' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 2, confidence: 100 },
+      { time: 'T-15m', amount: 10, confidence: 100 },
+      { time: 'NOW', amount: 28, confidence: 95 },
+      { time: 'T+15m', amount: 48, confidence: 90 },
+      { time: 'T+30m', amount: 36, confidence: 82 },
+      { time: 'T+45m', amount: 16, confidence: 72 },
+      { time: 'T+60m', amount: 5, confidence: 60 },
+    ]
+  },
+  {
+    id: 'kolkata',
+    name: 'Kolkata',
+    state: 'West Bengal',
+    coordinates: [88.3639, 22.5726],
+    temp: 30.4,
+    humidity: 85,
+    wind: 30,
+    aqi: 74,
+    cape: 2100,
+    windShear: 31,
+    rainRate: '62 mm/hr',
+    threat: 'Severe',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
+    minZoom: 4.0,
+    point1: "Nor'wester Squall: Multi-cell thunderstorm tracking SE at 45 km/h",
+    point2: 'Lightning Surge: Extreme cloud-to-ground flash rate (16/min)',
+    radarEcho: '64 dBZ Norwester',
+    alerts: [
+      { title: 'Kalbaishakhi Thunderstorm Warning', level: 'Level 3 Severe', confidence: 92, eta: 15 },
+      { title: 'Gale Inflow Alert', desc: 'Gusts up to 65 km/h expected across Hooghly basin' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 8, confidence: 100 },
+      { time: 'NOW', amount: 34, confidence: 96 },
+      { time: 'T+15m', amount: 62, confidence: 94 },
+      { time: 'T+30m', amount: 48, confidence: 85 },
+      { time: 'T+45m', amount: 20, confidence: 70 },
+      { time: 'T+60m', amount: 6, confidence: 55 },
+    ]
+  },
+  {
+    id: 'hyderabad',
+    name: 'Hyderabad',
+    state: 'Telangana',
+    coordinates: [78.4867, 17.3850],
+    temp: 31.8,
+    humidity: 70,
+    wind: 22,
+    aqi: 82,
+    cape: 1350,
+    windShear: 25,
+    rainRate: '42 mm/hr',
+    threat: 'Moderate',
+    dangerLevel: 'WARNING',
+    statusClass: 'status-warning',
+    color: '#f59e0b',
+    minZoom: 4.0,
+    point1: 'Isolated Convective Cell: 52 dBZ radar echo over Hitec City',
+    point2: 'Microburst Risk: Downdraft shear -14 kt on runway approach',
+    radarEcho: '52 dBZ Cell',
+    alerts: [
+      { title: 'Convective Cell Advisory', level: 'Level 2 Moderate', confidence: 82, eta: 35 },
+      { title: 'Underpass Sump Alert', desc: 'Begumpet and Gachibowli drainage units activated' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 2, confidence: 100 },
+      { time: 'NOW', amount: 16, confidence: 90 },
+      { time: 'T+15m', amount: 42, confidence: 86 },
+      { time: 'T+30m', amount: 30, confidence: 78 },
+      { time: 'T+45m', amount: 12, confidence: 65 },
+      { time: 'T+60m', amount: 0, confidence: 50 },
+    ]
+  },
+  {
+    id: 'pune',
+    name: 'Pune',
+    state: 'Maharashtra',
+    coordinates: [73.8567, 18.5204],
+    temp: 28.1,
+    humidity: 79,
+    wind: 20,
+    aqi: 54,
+    cape: 1100,
+    windShear: 22,
+    rainRate: '28 mm/hr',
+    threat: 'Low',
+    dangerLevel: 'SAFE',
+    statusClass: 'status-safe',
+    color: '#10b981',
+    minZoom: 4.5,
+    point1: 'Ghats Orographic Uplift: Rainbands drifting east towards city basin',
+    point2: 'River Catchment: Mutha spillway inflow nominal (+0.4m depth)',
+    radarEcho: '38 dBZ Stratiform',
+    alerts: [
+      { title: 'Orographic Shower Alert', level: 'Level 1 Safe', confidence: 78, eta: 40 },
+      { title: 'Surface Runoff Advisory', desc: 'Mild ponding observed near Shivaji Nagar' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 5, confidence: 100 },
+      { time: 'NOW', amount: 18, confidence: 95 },
+      { time: 'T+15m', amount: 28, confidence: 88 },
+      { time: 'T+30m', amount: 20, confidence: 80 },
+      { time: 'T+45m', amount: 10, confidence: 70 },
+      { time: 'T+60m', amount: 2, confidence: 60 },
+    ]
+  },
+  {
+    id: 'ahmedabad',
+    name: 'Ahmedabad',
+    state: 'Gujarat',
+    coordinates: [72.5714, 23.0225],
+    temp: 35.0,
+    humidity: 54,
+    wind: 18,
+    aqi: 110,
+    cape: 850,
+    windShear: 18,
+    rainRate: '12 mm/hr',
+    threat: 'Low',
+    dangerLevel: 'SAFE',
+    statusClass: 'status-safe',
+    color: '#10b981',
+    minZoom: 4.5,
+    point1: 'High LCL Cloud Base (1.8km): Sub-cloud virga evaporating rain',
+    point2: 'Thermal Boundary: Dust suspension with visibility at 3.5 km',
+    radarEcho: '28 dBZ Dry Echo',
+    alerts: [
+      { title: 'Dry Thermal Boundary Layer', level: 'Level 1 Safe', confidence: 70, eta: 50 },
+      { title: 'Particulate Suspension', desc: 'AQI elevated; no severe flash flooding expected' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 0, confidence: 100 },
+      { time: 'T-15m', amount: 0, confidence: 100 },
+      { time: 'NOW', amount: 2, confidence: 85 },
+      { time: 'T+15m', amount: 12, confidence: 80 },
+      { time: 'T+30m', amount: 8, confidence: 70 },
+      { time: 'T+45m', amount: 2, confidence: 60 },
+      { time: 'T+60m', amount: 0, confidence: 50 },
+    ]
+  },
+  {
+    id: 'kochi',
+    name: 'Kochi',
+    state: 'Kerala',
+    coordinates: [76.2673, 9.9312],
+    temp: 28.6,
+    humidity: 91,
+    wind: 24,
+    aqi: 42,
+    cape: 1650,
+    windShear: 26,
+    rainRate: '54 mm/hr',
+    threat: 'Moderate',
+    dangerLevel: 'WARNING',
+    statusClass: 'status-warning',
+    color: '#f59e0b',
+    minZoom: 4.5,
+    point1: 'Arabian Sea Plume: Heavy tropical warm rain process active',
+    point2: 'Periyar Basin: Hydrological runoff alert level 1 engaged',
+    radarEcho: '56 dBZ Oceanic Cell',
+    alerts: [
+      { title: 'Coastal Squall Warning', level: 'Level 2 Moderate', confidence: 89, eta: 20 },
+      { title: 'Backwater Runoff Alert', desc: 'Port container transit gates on waterlogged notice' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 8, confidence: 100 },
+      { time: 'T-15m', amount: 22, confidence: 100 },
+      { time: 'NOW', amount: 44, confidence: 95 },
+      { time: 'T+15m', amount: 54, confidence: 90 },
+      { time: 'T+30m', amount: 38, confidence: 85 },
+      { time: 'T+45m', amount: 20, confidence: 75 },
+      { time: 'T+60m', amount: 8, confidence: 65 },
+    ]
+  },
+  {
+    id: 'guwahati',
+    name: 'Guwahati',
+    state: 'Assam',
+    coordinates: [91.7362, 26.1445],
+    temp: 27.2,
+    humidity: 86,
+    wind: 16,
+    aqi: 48,
+    cape: 1950,
+    windShear: 29,
+    rainRate: '68 mm/hr',
+    threat: 'Severe',
+    dangerLevel: 'DANGER',
+    statusClass: 'status-danger',
+    color: '#ef4444',
+    minZoom: 4.5,
+    point1: 'Brahmaputra Valley Deluge: Stationary cloudburst cell over basin',
+    point2: 'Landslide Warning: Hillslope soil saturation index at 92%',
+    radarEcho: '66 dBZ Stationary',
+    alerts: [
+      { title: 'Stationary Cloudburst Alert', level: 'Level 3 Severe', confidence: 94, eta: 12 },
+      { title: 'Hillslope Soil Saturation', desc: 'Critical slope runoff warning along NH27' }
+    ],
+    precipitation: [
+      { time: 'T-30m', amount: 10, confidence: 100 },
+      { time: 'T-15m', amount: 32, confidence: 100 },
+      { time: 'NOW', amount: 56, confidence: 98 },
+      { time: 'T+15m', amount: 68, confidence: 94 },
+      { time: 'T+30m', amount: 52, confidence: 88 },
+      { time: 'T+45m', amount: 30, confidence: 78 },
+      { time: 'T+60m', amount: 14, confidence: 65 },
     ]
   }
 ];
@@ -726,7 +1015,7 @@ export default function Dashboard() {
 
     // Smoothly fly map to target city coordinates
     if (map.current) {
-      const targetZoom = Math.max(map.current.getZoom(), city.pointsZoom >= 10 ? 11.5 : 9.5);
+      const targetZoom = Math.max(map.current.getZoom(), city.minZoom >= 9 ? 11.5 : 9.5);
       map.current.flyTo({
         center: city.coordinates,
         zoom: targetZoom,
@@ -892,35 +1181,19 @@ export default function Dashboard() {
             }
           });
 
-          // Create City Weather Markers with Dynamic Zoom Point Expansion
+          // Create Minimalist Locality/City Sublabels directly below Map Text
           const currentZ = m.getZoom();
           markersRef.current = [];
 
           CITIES_DATA.forEach(city => {
             const el = document.createElement('div');
-            el.className = `vajra-city-marker ${city.id === selectedCity.id ? 'active' : ''} ${currentZ >= city.pointsZoom ? 'show-points' : ''}`;
+            el.className = `vajra-sublabel-marker ${city.id === selectedCity.id ? 'active' : ''}`;
             el.style.display = currentZ >= city.minZoom ? 'block' : 'none';
 
             el.innerHTML = `
-              <div class="vajra-marker-card">
-                <div class="vajra-marker-header">
-                  <div class="vajra-marker-title-wrap">
-                    <span class="vajra-marker-dot" style="background:${city.color}; color:${city.color};"></span>
-                    <span class="vajra-marker-name">${city.name}</span>
-                  </div>
-                  <span class="vajra-marker-temp">${city.temp}°C</span>
-                  <span class="vajra-marker-badge" style="background:${city.color}25; color:${city.color}; border: 1px solid ${city.color}50;">${city.threat}</span>
-                </div>
-                <div class="vajra-marker-points">
-                  <div class="vajra-marker-point-item">
-                    <span class="vajra-marker-point-bullet" style="color:${city.color};">•</span>
-                    <span>${city.point1}</span>
-                  </div>
-                  <div class="vajra-marker-point-item">
-                    <span class="vajra-marker-point-bullet" style="color:${city.color};">•</span>
-                    <span>${city.point2}</span>
-                  </div>
-                </div>
+              <div class="vajra-map-sublabel ${city.statusClass}">
+                <span class="vajra-sublabel-dot"></span>
+                <span>${city.temp}°C • ${city.dangerLevel}</span>
               </div>
             `;
 
@@ -929,31 +1202,29 @@ export default function Dashboard() {
               handleSelectCity(city);
             });
 
-            const marker = new mapboxgl.Marker({ element: el })
+            // Anchor 'top' with slight Y offset places the sublabel directly underneath the map's native locality text
+            const marker = new mapboxgl.Marker({ 
+              element: el,
+              anchor: 'top',
+              offset: [0, 8]
+            })
               .setLngLat(city.coordinates)
               .addTo(m);
 
             markersRef.current.push({ marker, city, el });
           });
 
-          // Update zoom ratio and marker expansion on every zoom step
+          // Update zoom ratio and marker visibility on every zoom step
           m.on('zoom', () => {
             const z = m.getZoom();
             setCurrentZoom(z);
 
             markersRef.current.forEach(item => {
-              // Toggle marker visibility based on minZoom
+              // Seamlessly reveal locality sublabels at appropriate zoom levels
               if (z >= item.city.minZoom) {
                 item.el.style.display = 'block';
               } else {
                 item.el.style.display = 'none';
-              }
-
-              // Toggle 2-point expansion after crossing city.pointsZoom threshold!
-              if (z >= item.city.pointsZoom) {
-                item.el.classList.add('show-points');
-              } else {
-                item.el.classList.remove('show-points');
               }
             });
           });
