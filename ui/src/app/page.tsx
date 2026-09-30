@@ -1570,86 +1570,12 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Floating Zoom & Map Control Indicator (Top Left under Header) */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: '90px',
-          left: '24px',
-          zIndex: 15,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: 'rgba(15, 23, 42, 0.75)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '24px',
-          padding: '6px 14px',
-          fontSize: '12px',
-          color: 'var(--text-primary)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
-        }}
-      >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-          <Navigation size={13} color="var(--color-precip)" />
-          Zoom: {currentZoom.toFixed(1)}x
-        </span>
-        <span style={{ color: 'var(--text-secondary)' }}>•</span>
-        <span style={{ color: currentZoom >= 8.0 ? '#10B981' : 'var(--text-secondary)', fontSize: '11px' }}>
-          {currentZoom >= 8.0 ? '✨ 2 Key Insights Active' : '🔍 Zoom in (≥8x) for City Insights'}
-        </span>
-        <button
-          onClick={() => {
-            if (map.current) {
-              map.current.flyTo({ center: [77.5946, 12.9716], zoom: 11.5, pitch: 65, bearing: -20, duration: 1500 });
-              setSelectedCity(CITIES_DATA[0]);
-            }
-          }}
-          style={{
-            marginLeft: '6px',
-            background: 'rgba(255,255,255,0.1)',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '2px 8px',
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
-            fontSize: '11px',
-            fontWeight: 600
-          }}
-          title="Reset View to Central Bengaluru Doppler Radar"
-        >
-          Reset View
-        </button>
-      </div>
-
       {/* Interactive Sidebar: Dynamic City Deep-Dive with the 2 Key Points */}
       <aside className="glass-panel sidebar" style={{ zIndex: 20 }}>
         <div className="sidebar-header">
           <h2>AI Nowcast Stream</h2>
           <div className="pulse-indicator"></div>
         </div>
-
-        {/* Selected City Severe Alert Cards */}
-        {alerts[0] && (
-          <div className="alert-card severe" style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>
-            <div className="alert-header">
-              <CloudLightning size={20} />
-              <h3>{alerts[0].title}</h3>
-            </div>
-            <p>{alerts[0].level} &bull; {alerts[0].confidence}% Confidence</p>
-            {alerts[0].eta !== undefined && <div className="eta">ETA: {alerts[0].eta} mins</div>}
-          </div>
-        )}
-
-        {alerts[1] && (
-          <div className="alert-card warning" style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>
-            <div className="alert-header">
-              <Droplets size={20} />
-              <h3>{alerts[1].title}</h3>
-            </div>
-            <p>{alerts[1].desc}</p>
-          </div>
-        )}
 
         {/* Location Deep-Dive & Main 2 Meteorological Points */}
         <div className="telemetry-section">
