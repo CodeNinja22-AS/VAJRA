@@ -12,49 +12,64 @@ import {
   Calendar, 
   TrendingUp, 
   MapPin, 
-  Sparkles 
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { fetchReplayCase } from '@/lib/api';
 
 export default function ReplayPage() {
   const [selectedCase, setSelectedCase] = useState<'blr-2022' | 'michaung-2023' | 'delhi-2024'>('blr-2022');
   const [timeStep, setTimeStep] = useState<number>(3);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const cases = {
-    'blr-2022': {
-      title: 'Bengaluru Urban Flash Flood & Cloudburst',
-      date: 'September 5, 2022',
-      location: 'Bengaluru, Karnataka (DWR Bangalore)',
-      peakRain: '132 mm/hr',
-      summary: 'Catastrophic stationary convective cluster over Bellandur & Outer Ring Road caused by high shear moisture convergence.',
-      leadTimeGained: '+46 mins',
-      csiScore: '0.86',
-      nwpFailureDesc: 'Operational NWP missed the convective cell initiation by 3.5 hours; VAJRA flagged severe vortex 46 mins before inundation.'
-    },
-    'michaung-2023': {
-      title: 'Cyclone Michaung Outer Spiral Convection',
-      date: 'December 4, 2023',
-      location: 'Chennai & South AP Coast (DWR Chennai)',
-      peakRain: '185 mm/hr',
-      summary: 'Extreme meso-vortex rainband stalled directly over Chennai airport runway glideslope, delivering 450mm in 24 hours.',
-      leadTimeGained: '+55 mins',
-      csiScore: '0.89',
-      nwpFailureDesc: 'Traditional models forecasted coastal landfall 80km north; VAJRA optical flow correctly tracked inland stationary rainband.'
-    },
-    'delhi-2024': {
-      title: 'Delhi-NCR Severe Squall Line & Gale Derecho',
-      date: 'May 10, 2024',
-      location: 'Delhi-NCR (DWR Palam & Mausam Bhawan)',
-      peakRain: '68 mm/hr + 96 km/h Winds',
-      summary: 'High-speed linear squall line with severe downbursts and sudden 24°C drop in temperature within 15 minutes.',
-      leadTimeGained: '+38 mins',
-      csiScore: '0.82',
-      nwpFailureDesc: 'Standard models failed to resolve the gust front boundary; VAJRA multimodal satellite-radar attention signaled 96 km/h gusts.'
+  const [caseDetails, setCaseDetails] = useState<any>({
+    title: 'Bengaluru Urban Flash Flood & Cloudburst',
+    date: 'September 5, 2022',
+    location: 'Bengaluru, Karnataka (DWR Bangalore)',
+    peakRain: '132 mm/hr',
+    summary: 'Catastrophic stationary convective cluster over Bellandur & Outer Ring Road caused by high shear moisture convergence.',
+    leadTimeGained: '+46 mins',
+    csiScore: '0.86',
+    nwpFailureDesc: 'Operational NWP missed the convective cell initiation by 3.5 hours; VAJRA flagged severe vortex 46 mins before inundation.',
+    timelineSteps: [
+      { label: 'T-45m', time: '17:15 IST', desc: 'Cell Inception: Convective initiation detected via INSAT-3DS Cloud-Top Cooling' },
+      { label: 'T-30m', time: '17:30 IST', desc: 'Echo Deepening: Radar reflectivity climbs past 45 dBZ with strong updraft' },
+      { label: 'T-15m', time: '17:45 IST', desc: 'Pre-Warning Issued: VAJRA triggers Level 3 severe alert (+85 mm/hr peak predicted)' },
+      { label: 'NOW (T=0)', time: '18:00 IST', desc: 'Inundation Peak: Ground rain gauges hit 132 mm/hr; Bellandur underpass submerged' },
+      { label: 'T+15m', time: '18:15 IST', desc: 'Cell Advection: Core shifts SE towards Sarjapur with high reflectivity' },
+      { label: 'T+30m', time: '18:30 IST', desc: 'Dissipation Phase: Cold downdraft cuts off convective inflow, stratiform rain begins' },
+      { label: 'T+45m', time: '18:45 IST', desc: 'Residual Drainage: Civil defense de-watering pumps operate at capacity' }
+    ],
+    hydrographData: [
+      { time: 'T-45m', observed: 4, vajraPredicted: 6, nwpBaseline: 2 },
+      { time: 'T-30m', observed: 18, vajraPredicted: 22, nwpBaseline: 5 },
+      { time: 'T-15m', observed: 55, vajraPredicted: 62, nwpBaseline: 12 },
+      { time: 'NOW (T=0)', observed: 132, vajraPredicted: 128, nwpBaseline: 28 },
+      { time: 'T+15m', observed: 98, vajraPredicted: 105, nwpBaseline: 32 },
+      { time: 'T+30m', observed: 42, vajraPredicted: 48, nwpBaseline: 22 },
+      { time: 'T+45m', observed: 14, vajraPredicted: 18, nwpBaseline: 15 },
+    ]
+  });
+
+  const loadCaseData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchReplayCase(selectedCase);
+      if (data) {
+        setCaseDetails(data);
+      }
+    } catch (err) {
+      console.error('Error fetching replay case:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const currentCase = cases[selectedCase];
+  useEffect(() => {
+    loadCaseData();
+  }, [selectedCase]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -64,25 +79,9 @@ export default function ReplayPage() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  const timelineSteps = [
-    { label: 'T-45m', time: '17:15 IST', desc: 'Cell Inception: Convective initiation detected via INSAT-3DS Cloud-Top Cooling' },
-    { label: 'T-30m', time: '17:30 IST', desc: 'Echo Deepening: Radar reflectivity climbs past 45 dBZ with strong updraft' },
-    { label: 'T-15m', time: '17:45 IST', desc: 'Pre-Warning Issued: VAJRA triggers Level 3 severe alert (+85 mm/hr peak predicted)' },
-    { label: 'NOW (T=0)', time: '18:00 IST', desc: 'Inundation Peak: Ground rain gauges hit 132 mm/hr; Bellandur underpass submerged' },
-    { label: 'T+15m', time: '18:15 IST', desc: 'Cell Advection: Core shifts SE towards Sarjapur with high reflectivity' },
-    { label: 'T+30m', time: '18:30 IST', desc: 'Dissipation Phase: Cold downdraft cuts off convective inflow, stratiform rain begins' },
-    { label: 'T+45m', time: '18:45 IST', desc: 'Residual Drainage: Civil defense de-watering pumps operate at capacity' }
-  ];
-
-  const hydrographData = [
-    { time: 'T-45m', observed: 4, vajraPredicted: 6, nwpBaseline: 2 },
-    { time: 'T-30m', observed: 18, vajraPredicted: 22, nwpBaseline: 5 },
-    { time: 'T-15m', observed: 55, vajraPredicted: 62, nwpBaseline: 12 },
-    { time: 'T=0', observed: 132, vajraPredicted: 128, nwpBaseline: 24 },
-    { time: 'T+15m', observed: 98, vajraPredicted: 92, nwpBaseline: 30 },
-    { time: 'T+30m', observed: 42, vajraPredicted: 40, nwpBaseline: 28 },
-    { time: 'T+45m', observed: 15, vajraPredicted: 14, nwpBaseline: 15 }
-  ];
+  const timelineSteps = caseDetails.timelineSteps || [];
+  const hydrographData = caseDetails.hydrographData || [];
+  const currentStep = timelineSteps[timeStep] || timelineSteps[0];
 
   return (
     <div className="page-container" style={{ maxWidth: '1360px', padding: '36px 28px 80px' }}>
@@ -91,196 +90,217 @@ export default function ReplayPage() {
         <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           <ArrowLeft size={18} /> Back to Live Radar Command Center
         </Link>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid #3B82F6', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#60A5FA', fontWeight: 600 }}>
-          <Sparkles size={14} /> Historical Verification Engine Active
-        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            onClick={loadCaseData}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          >
+            <RefreshCw size={13} className={isLoading ? 'spin-animation' : ''} /> Case Data Sync
+          </button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid #3B82F6', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#60A5FA', fontWeight: 600 }}>
+            <Sparkles size={14} /> Historical Verification Engine Active
+          </span>
+        </div>
       </div>
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ margin: '0 0 8px 0', fontSize: '30px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <RotateCcw size={30} color="var(--color-precip)" /> Historical Case Studies & Event Replay
+          <RotateCcw size={30} color="#60A5FA" /> Historical Storm Replay &amp; Validation Case Studies
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '15px' }}>
-          Examine benchmark extreme convective events to verify how VAJRA’s physics-informed multimodal deep learning outperformed traditional numerical models.
+          Step-by-step hindcast evaluation comparing VAJRA physics-informed predictions against operational NWP baselines and verified ground gauges.
         </p>
       </div>
 
-      {/* Case Study Selector Tabs */}
+      {/* Case Selector Tabs */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
-        {(Object.keys(cases) as Array<keyof typeof cases>).map(k => (
+        {[
+          { id: 'blr-2022', title: 'Bengaluru 2022 Flash Flood', date: 'Sep 5, 2022', metric: '+46m Lead Time' },
+          { id: 'michaung-2023', title: 'Cyclone Michaung Rainband', date: 'Dec 4, 2023', metric: '+55m Lead Time' },
+          { id: 'delhi-2024', title: 'Delhi Squall Line Derecho', date: 'May 10, 2024', metric: '96 km/h Winds' },
+        ].map(cs => (
           <button
-            key={k}
-            onClick={() => { setSelectedCase(k); setTimeStep(3); }}
+            key={cs.id}
+            onClick={() => { setSelectedCase(cs.id as any); setTimeStep(3); }}
             style={{
-              padding: '12px 18px',
+              padding: '14px 20px',
               borderRadius: '10px',
-              border: selectedCase === k ? '1px solid var(--color-precip)' : '1px solid var(--border-color)',
-              background: selectedCase === k ? 'rgba(0, 180, 255, 0.15)' : 'rgba(255,255,255,0.04)',
-              color: selectedCase === k ? 'var(--text-primary)' : 'var(--text-secondary)',
+              border: selectedCase === cs.id ? '1px solid var(--color-precip)' : '1px solid var(--border-color)',
+              background: selectedCase === cs.id ? 'rgba(0, 180, 255, 0.15)' : 'rgba(255,255,255,0.04)',
+              color: selectedCase === cs.id ? 'var(--text-primary)' : 'var(--text-secondary)',
               cursor: 'pointer',
               fontWeight: 600,
               fontSize: '13px',
-              textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
               gap: '4px',
-              transition: 'all 0.2s',
-              minWidth: '260px'
+              minWidth: '220px',
+              textAlign: 'left',
+              transition: 'all 0.2s'
             }}
           >
-            <div style={{ fontSize: '14px', color: selectedCase === k ? 'var(--color-precip)' : 'var(--text-primary)' }}>
-              {cases[k].title}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <span style={{ fontSize: '14px', fontWeight: 'bold', color: selectedCase === cs.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                {cs.title}
+              </span>
+              <span style={{ fontSize: '11px', color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                {cs.metric}
+              </span>
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-              {cases[k].date} &bull; {cases[k].location}
-            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{cs.date}</span>
           </button>
         ))}
       </div>
 
-      {/* Hero Overview Box */}
-      <div className="glass-panel" style={{ padding: '24px', marginBottom: '28px', borderLeft: '4px solid var(--color-precip)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+      {/* Event Overview Hero */}
+      <div className="glass-panel" style={{ padding: '24px', marginBottom: '28px', borderLeft: '4px solid #60A5FA' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
           <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Selected Event</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', marginTop: '4px' }}>{currentCase.title}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{currentCase.date} &bull; {currentCase.location}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '6px' }}>
+              <Calendar size={14} /> {caseDetails.date} &bull; <MapPin size={14} /> {caseDetails.location}
+            </div>
+            <h2 style={{ fontSize: '22px', margin: '0 0 10px 0' }}>{caseDetails.title}</h2>
+            <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              {caseDetails.summary}
+            </p>
           </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Observed Peak Rain</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-severe)', marginTop: '4px' }}>{currentCase.peakRain}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Ground automated station recorded</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>VAJRA Lead Time Gained</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10B981', marginTop: '4px' }}>{currentCase.leadTimeGained}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Earlier than IMD standard advisory</div>
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Verification CSI Skill</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#60A5FA', marginTop: '4px' }}>{currentCase.csiScore}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Critical Success Index (&gt;35 dBZ)</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', textAlign: 'center' }}>
+            <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Actionable Lead Time</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10B981', marginTop: '4px' }}>{caseDetails.leadTimeGained}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Before max inundation</div>
+            </div>
+            <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Validation CSI Score</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-precip)', marginTop: '4px' }}>{caseDetails.csiScore}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Ground verified radar match</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Replay Scrubber Controller */}
-      <div className="glass-panel" style={{ padding: '20px 24px', marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+      {/* Replay Controls & Step Bar */}
+      <div className="glass-panel" style={{ padding: '24px', marginBottom: '28px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                border: 'none',
-                background: isPlaying ? 'var(--color-severe)' : 'var(--color-precip)',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                gap: '8px',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                background: isPlaying ? '#f59e0b' : 'var(--color-precip)',
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '13px'
               }}
             >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: '2px' }} />}
+              {isPlaying ? <><Pause size={16} /> Pause Replay</> : <><Play size={16} /> Play Storm Evolution</>}
             </button>
-            <div>
-              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{timelineSteps[timeStep].label} ({timelineSteps[timeStep].time})</span>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{timelineSteps[timeStep].desc}</div>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Step {timeStep + 1} of {timelineSteps.length}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {timelineSteps.map((step: any, idx: number) => (
+              <button
+                key={idx}
+                onClick={() => setTimeStep(idx)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: timeStep === idx ? '1px solid var(--color-precip)' : '1px solid var(--border-color)',
+                  background: timeStep === idx ? 'rgba(0,180,255,0.2)' : 'rgba(255,255,255,0.04)',
+                  color: timeStep === idx ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: timeStep === idx ? 'bold' : 'normal'
+                }}
+              >
+                {step.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Current Time Step Callout */}
+        {currentStep && (
+          <div style={{ padding: '16px 20px', background: 'rgba(0,0,0,0.25)', borderRadius: '10px', borderLeft: '4px solid var(--color-precip)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--color-precip)' }}>{currentStep.label} &bull; {currentStep.time}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)' }}>
+              {currentStep.desc}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Hydrograph Chart & Operational Failure Contrast */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '24px' }}>
+        
+        {/* Hydrograph Area Chart */}
+        <div className="glass-panel" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '18px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={20} color="var(--color-precip)" /> Hydrograph Precipitation Forecast vs Ground Reality
+            </h2>
+            <div style={{ display: 'flex', gap: '14px', fontSize: '12px' }}>
+              <span style={{ color: '#10B981' }}>&bull; Ground Truth (Observed)</span>
+              <span style={{ color: 'var(--color-precip)' }}>&bull; VAJRA Predicted</span>
+              <span style={{ color: '#64748B' }}>&bull; NWP Baseline (GFS)</span>
             </div>
           </div>
 
-          <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '6px', background: 'rgba(255,255,255,0.08)' }}>
-            Step {timeStep + 1} of 7
-          </span>
-        </div>
-
-        <input 
-          type="range" 
-          min="0" 
-          max="6" 
-          step="1" 
-          value={timeStep} 
-          onChange={(e) => setTimeStep(parseInt(e.target.value, 10))}
-          style={{ width: '100%', cursor: 'pointer' }}
-        />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px' }}>
-          {timelineSteps.map((step, idx) => (
-            <span key={idx} style={{ color: idx === timeStep ? 'var(--color-precip)' : 'inherit', fontWeight: idx === timeStep ? 700 : 400 }}>
-              {step.label}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Model Benchmark Comparison Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
-        {/* Ground Truth Actual */}
-        <div className="glass-panel" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Ground Truth Doppler Radar</span>
-            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontWeight: 'bold' }}>OBSERVED</span>
-          </div>
-          <div style={{ height: '140px', background: 'radial-gradient(circle at 60% 50%, rgba(239, 68, 68, 0.8), rgba(245, 158, 11, 0.6), rgba(34, 197, 94, 0.4), transparent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <span style={{ background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
-              65 dBZ Severe Core
-            </span>
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '12px', lineHeight: 1.4 }}>
-            Uncalibrated IMD Doppler reflectivity sweep showing intense meso-cyclonic hook echo over urban core.
+          <div style={{ height: '300px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={hydrographData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="time" stroke="var(--text-secondary)" fontSize={11} />
+                <YAxis unit=" mm/h" stroke="var(--text-secondary)" fontSize={11} />
+                <Tooltip contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }} />
+                <Area type="monotone" dataKey="observed" stroke="#10B981" fill="#10B98120" strokeWidth={2.5} name="Observed Gauge" />
+                <Area type="monotone" dataKey="vajraPredicted" stroke="#00B4FF" fill="#00B4FF25" strokeWidth={2.5} name="VAJRA Prediction" />
+                <Area type="monotone" dataKey="nwpBaseline" stroke="#64748B" fill="#64748B10" strokeDasharray="4 4" strokeWidth={1.5} name="NWP Baseline" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* VAJRA Multi-Modal Prediction */}
-        <div className="glass-panel" style={{ padding: '20px', border: '1px solid var(--color-precip)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-precip)' }}>VAJRA Physics Hybrid Nowcast</span>
-            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.2)', color: '#10B981', fontWeight: 'bold' }}>+46m ADVANCE</span>
-          </div>
-          <div style={{ height: '140px', background: 'radial-gradient(circle at 58% 52%, rgba(239, 68, 68, 0.85), rgba(245, 158, 11, 0.65), rgba(0, 180, 255, 0.35), transparent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: '#10B981' }}>
-              94% Spatial Correlation
-            </span>
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '12px', lineHeight: 1.4 }}>
-            Correctly predicted storm vector, maximum liquid water content (VIL: 52 kg/m²), and exact flood polygon 46 mins earlier.
+        {/* Operational Contrast Analysis */}
+        <div className="glass-panel" style={{ padding: '24px' }}>
+          <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Award size={20} color="#10B981" /> Operational Failure of Legacy Models
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '13px', color: '#ef4444', marginBottom: '4px' }}>
+                Why Operational NWP Failed:
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                {caseDetails.nwpFailureDesc}
+              </p>
+            </div>
+
+            <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '13px', color: '#10B981', marginBottom: '4px' }}>
+                VAJRA Physics-Informed Advantage:
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                By cross-attending real-time INSAT-3DS cloud-top cooling with DWR doppler wind velocity, VAJRA detected convective updraft formation 46 minutes before the surface cloudburst.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Traditional NWP Baseline */}
-        <div className="glass-panel" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Standard NWP (WRF / GFS 3km)</span>
-            <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-secondary)', fontWeight: 'bold' }}>FAILED</span>
-          </div>
-          <div style={{ height: '140px', background: 'radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.4), rgba(6, 182, 212, 0.2), transparent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: '#ef4444' }}>
-              Misplaced by 65 km
-            </span>
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '12px', lineHeight: 1.4 }}>
-            {currentCase.nwpFailureDesc}
-          </div>
-        </div>
-      </div>
-
-      {/* Hydrograph Chart Comparison */}
-      <div className="glass-panel" style={{ padding: '24px' }}>
-        <h3 style={{ fontSize: '16px', margin: '0 0 16px 0' }}>Hydrograph Evolution: Observed vs. VAJRA vs. Numerical Baseline</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <AreaChart data={hydrographData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="time" stroke="var(--text-secondary)" fontSize={11} />
-            <YAxis stroke="var(--text-secondary)" fontSize={11} label={{ value: 'Rainfall (mm/hr)', angle: -90, position: 'insideLeft', fill: 'var(--text-secondary)', fontSize: 11 }} />
-            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px' }} />
-            <Area type="monotone" dataKey="observed" stroke="#ef4444" fill="rgba(239, 68, 68, 0.2)" strokeWidth={3} name="Observed Rain Gauge" />
-            <Area type="monotone" dataKey="vajraPredicted" stroke="#00B4FF" fill="rgba(0, 180, 255, 0.15)" strokeWidth={2} strokeDasharray="4 4" name="VAJRA +45m Prediction" />
-            <Area type="monotone" dataKey="nwpBaseline" stroke="#6B7280" fill="transparent" strokeWidth={2} name="IMD NWP Model" />
-          </AreaChart>
-        </ResponsiveContainer>
       </div>
     </div>
   );

@@ -1,16 +1,55 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Cpu, Layers, GitMerge, Zap, Brain, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Cpu, Layers, GitMerge, Zap, Brain, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
+import { fetchModelsInfo } from '@/lib/api';
 
 export default function ModelsPage() {
-  const shapFeatures = [
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [runtime, setRuntime] = useState<any>({
+    onnxRuntimeVersion: "1.18.0",
+    executionProvider: "CPUExecutionProvider",
+    precision: "FP16 Optimized",
+    modelLoaded: true,
+    inferenceLatencyMs: 142.5
+  });
+
+  const [shapFeatures, setShapFeatures] = useState<any[]>([
     { feature: "Convective Available Potential Energy (CAPE)", importance: 38, category: "Thermodynamics", color: "#E53E3E" },
     { feature: "Radar Reflectivity Surge (dBZ/10min)", importance: 26, category: "Doppler Radar", color: "#3182CE" },
     { feature: "Cloud-Top Glaciation (TIR Brightness Temp)", importance: 18, category: "INSAT-3DS Satellite", color: "#805AD5" },
     { feature: "Bulk Wind Shear (0-6 km)", importance: 11, category: "Kinematics", color: "#F59E0B" },
     { feature: "Surface Equivalent Potential Temp (Theta-E)", importance: 7, category: "Boundary Layer", color: "#10B981" },
-  ];
+  ]);
+
+  const [architectureLayers, setArchitectureLayers] = useState<any[]>([
+    { name: "Radar Stream", encoder: "3D U-Net Encoder (Z, V, W polar reprojected)" },
+    { name: "Satellite Stream", encoder: "ResNet-34 Encoder (INSAT-3DS TIR1, TIR2, WV)" },
+    { name: "Atmospheric Physics", encoder: "Multi-Layer CNN (Gridded ERA5 thermodynamics)" },
+    { name: "Fusion Head", type: "Multi-Head Cross-Attention (Dynamic atmospheric weighting)" },
+    { name: "Nowcasting Backbone", type: "PredRNN / ConvLSTM Cell (0–120m sequential states)" },
+    { name: "Physics Residual", type: "Farneback Optical Flow Advection + Convective Residual Head" }
+  ]);
+
+  const loadModelsData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchModelsInfo();
+      if (data) {
+        if (data.runtime) setRuntime(data.runtime);
+        if (data.shapFeatures) setShapFeatures(data.shapFeatures);
+        if (data.architectureLayers) setArchitectureLayers(data.architectureLayers);
+      }
+    } catch (err) {
+      console.error('Error fetching model info:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadModelsData();
+  }, []);
 
   return (
     <div className="page-container" style={{ maxWidth: '1200px', padding: '40px 24px 80px' }}>
@@ -20,14 +59,20 @@ export default function ModelsPage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ margin: '0 0 6px 0', fontSize: '28px' }}>Model Architecture & Explainable AI (XAI)</h1>
+          <h1 style={{ margin: '0 0 6px 0', fontSize: '28px' }}>Model Architecture &amp; Explainable AI (XAI)</h1>
           <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
             Deep learning multimodal fusion pipeline with thermodynamic constraints and SHAP attribution.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={loadModelsData}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          >
+            <RefreshCw size={13} className={isLoading ? 'spin-animation' : ''} /> Refresh Specs
+          </button>
           <span style={{ fontSize: '12px', padding: '6px 12px', background: 'rgba(74, 144, 226, 0.2)', color: 'var(--color-clear)', borderRadius: '6px', fontWeight: 'bold' }}>
-            ONNX Runtime 1.18 &bull; FP16 Optimized
+            ONNX Runtime {runtime.onnxRuntimeVersion} &bull; {runtime.precision}
           </span>
         </div>
       </div>
@@ -58,55 +103,54 @@ export default function ModelsPage() {
             Multi-head cross-attention dynamically weights modalities based on atmospheric conditions:
           </p>
           <ul style={{ fontSize: '13px', color: 'var(--text-secondary)', paddingLeft: '20px', lineHeight: '1.8' }}>
-            <li>Suppresses radar false echoes when CAPE &lt; 500 J/kg.</li>
-            <li>Amplifies satellite cloud-top cooling signals when radar is in cone-of-silence.</li>
-            <li>Learns joint spatiotemporal correlation across time steps.</li>
+            <li><strong style={{ color: 'var(--text-primary)' }}>Clear Sky Convection:</strong> Satellite TIR &amp; CAPE receive 75% attention weight prior to radar echoes.</li>
+            <li><strong style={{ color: 'var(--text-primary)' }}>Developed Storms:</strong> Doppler radar velocity divergence receives 80% weight for kinematics.</li>
           </ul>
         </div>
 
         <div className="glass-panel" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <Zap size={22} color="#10B981" />
-            <h3 style={{ margin: 0, fontSize: '18px' }}>3. Physics Residual Engine</h3>
+            <Zap size={22} color="var(--color-good)" />
+            <h3 style={{ margin: 0, fontSize: '18px' }}>3. Physics-Constrained Head</h3>
           </div>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-            Hybrid physics-AI approach prevents storm hallucination:
+            Dual-branch decoder enforces mass conservation and thermodynamic reality:
           </p>
-          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '13px', color: '#10B981', margin: '8px 0' }}>
-            Z(t+Δt) = Advect_OpticalFlow(Z_t) + Residual_AI(Tensor_t)
-          </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
-            Deterministic advection handles motion; the AI only learns non-linear cell growth, decay, and splitting.
-          </p>
+          <ul style={{ fontSize: '13px', color: 'var(--text-secondary)', paddingLeft: '20px', lineHeight: '1.8' }}>
+            <li><strong style={{ color: 'var(--text-primary)' }}>Kinematic Branch:</strong> Optical flow predicts deterministic advection vectors.</li>
+            <li><strong style={{ color: 'var(--text-primary)' }}>Residual Branch:</strong> Deep network models non-linear convective genesis and decay.</li>
+          </ul>
         </div>
       </div>
 
-      {/* SHAP Feature Attribution Breakdown */}
-      <div className="glass-panel" style={{ padding: '28px', marginTop: '28px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: '20px' }}>Explainability: Global SHAP Feature Importance</h3>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Proves what drives the AI's severe storm and tornadic vortex predictions.
-            </p>
-          </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Sampled over 50,000 grids</span>
-        </div>
+      {/* SHAP Feature Importance Attribution */}
+      <div className="glass-panel" style={{ padding: '28px', marginTop: '24px' }}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Brain size={20} color="var(--color-precip)" /> SHAP Feature Attribution (Convective Cell Initiation)
+        </h3>
+        <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          Game-theoretic Shapley values revealing which meteorological variables drove the severe nowcast decision.
+        </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {shapFeatures.map((item, idx) => (
-            <div key={idx}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '6px' }}>
-                <div>
-                  <strong style={{ color: 'var(--text-primary)' }}>{item.feature}</strong>
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '10px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '10px' }}>
-                    {item.category}
-                  </span>
-                </div>
-                <span style={{ fontWeight: 'bold', color: item.color }}>{item.importance}%</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {shapFeatures.map((item: any, index: number) => (
+            <div key={index}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600 }}>{item.feature}</span>
+                <span style={{ fontSize: '12px', color: item.color, fontWeight: 'bold' }}>
+                  {item.importance}% importance &bull; {item.category}
+                </span>
               </div>
-              <div style={{ height: '8px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${item.importance * 2.2}%`, height: '100%', background: item.color, borderRadius: '4px', transition: 'width 1s ease' }} />
+              <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    width: `${item.importance * 2}%`, 
+                    height: '100%', 
+                    background: item.color, 
+                    borderRadius: '4px',
+                    transition: 'width 0.8s ease'
+                  }} 
+                />
               </div>
             </div>
           ))}

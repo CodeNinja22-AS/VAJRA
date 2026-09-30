@@ -1,0 +1,97 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#FFFFFF',
+    'primaryTextColor': '#0F172A',
+    'primaryBorderColor': '#6366F1',
+    'lineColor': '#475569',
+    'fontFamily': 'Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+    'fontSize': '11px'
+  }
+}}%%
+
+flowchart TB
+    %% =========================================================================
+    %% VAJRA SYSTEM ARCHITECTURE - COMPACT SLIDE COLUMN (PPT OPTIMIZED)
+    %% Formatted specifically to fit the right-hand column in presentation slides
+    %% =========================================================================
+
+    %% --- 1. DATA SOURCES & INGESTION ---
+    subgraph S1["1. Multi-Source Ingestion & Lake"]
+        direction TB
+        n_src["📡 <b>IMD Radar</b> (ODIM_H5)<br/>🛰️ <b>INSAT-3D</b> (TIR/WV)<br/>🌐 <b>ERA5 NWP</b> (NetCDF)"]
+        n_lake[("🗄️ <b>Raw Data Lake</b><br/><small>AWS S3 / Local Disk</small>")]
+        n_src -->|"Raw Streams"| n_lake
+    end
+
+    %% --- 2. PROCESSING & DASK PIPELINE ---
+    subgraph S2["2. Processing & Engineering (Dask)"]
+        direction TB
+        n_proc["⚙️ <b>Py-ART / MetPy / SatPy</b><br/><small>Gridding & Physics Alignment</small>"]
+        n_zarr[("📦 <b>Zarr Array Store</b><br/><small>Cloud-Optimized Chunks</small>")]
+        n_proc --> n_zarr
+    end
+
+    %% --- 3. SPATIO-TEMPORAL AI ENGINE ---
+    subgraph S3["3. Spatio-Temporal AI Engine"]
+        direction TB
+        n_ai{{"🧠 <b>ConvLSTM + Transformer</b><br/><b>ONNX Runtime</b><br/><small>Precipitation Nowcasting (0-4h)</small>"}}
+    end
+
+    %% --- 4. BACKEND & API SERVICES ---
+    subgraph S4["4. Backend & API Layer"]
+        direction TB
+        n_api["⚡ <b>FastAPI Inference API</b>"]
+        n_db[("🐘 <b>PostGIS</b> (Alerts) &nbsp;|&nbsp; ⚡ <b>Redis</b> (Cache)")]
+        n_api <-->|"Query / State"| n_db
+    end
+
+    %% --- 5. FRONTEND COMMAND CENTER ---
+    subgraph S5["5. Command Center UI"]
+        direction TB
+        n_ui["💻 <b>Next.js 14 Dashboard</b><br/>🗺️ <b>Mapbox GL JS + WebGL 3D</b>"]
+    end
+
+    %% --- PIPELINE FLOW CONNECTIONS ---
+    n_lake -->|"Stream"| n_proc
+    n_zarr -->|"Tensor Inputs"| n_ai
+    n_ai -->|"Inference & Warnings"| n_api
+    n_api -->|"GeoJSON & Vector Tiles"| n_ui
+
+    %% =========================================================================
+    %% COLOR THEORY STYLES: MEDIUM CONTRAST (MATCHING PURPLE/SLATE PPT THEME)
+    %% =========================================================================
+    classDef default fill:#FFFFFF,stroke:#CBD5E1,stroke-width:1.5px,color:#0F172A;
+    
+    %% Tier 1: Medium Sapphire Blue
+    classDef srcStyle fill:#EFF6FF,stroke:#2563EB,stroke-width:1.5px,color:#0F172A;
+    classDef lakeStyle fill:#DBEAFE,stroke:#1D4ED8,stroke-width:1.8px,color:#0F172A;
+    class n_src srcStyle;
+    class n_lake lakeStyle;
+
+    %% Tier 2: Medium Teal
+    classDef procStyle fill:#F0FDFA,stroke:#0D9488,stroke-width:1.5px,color:#0F172A;
+    classDef zarrStyle fill:#CCFBF1,stroke:#0F766E,stroke-width:1.8px,color:#0F172A;
+    class n_proc procStyle;
+    class n_zarr zarrStyle;
+
+    %% Tier 3: Medium Royal Violet (Centerpiece matching slide purple frame)
+    classDef aiStyle fill:#FAF5FF,stroke:#7C3AED,stroke-width:2.2px,color:#3B0764;
+    class n_ai aiStyle;
+
+    %% Tier 4: Medium Amber Gold
+    classDef apiStyle fill:#FFFBEB,stroke:#D97706,stroke-width:1.5px,color:#0F172A;
+    classDef dbStyle fill:#FEF3C7,stroke:#B45309,stroke-width:1.8px,color:#0F172A;
+    class n_api apiStyle;
+    class n_db dbStyle;
+
+    %% Tier 5: Medium Emerald Jade
+    classDef uiStyle fill:#ECFDF5,stroke:#059669,stroke-width:1.8px,color:#064E3B;
+    class n_ui uiStyle;
+
+    %% Subgraph Container Bounding Cards
+    style S1 fill:#F8FAFC,stroke:#93C5FD,stroke-width:1.2px,color:#1E3A8A;
+    style S2 fill:#F8FAFC,stroke:#5EEAD4,stroke-width:1.2px,color:#115E59;
+    style S3 fill:#FAF5FF,stroke:#C084FC,stroke-width:1.8px,color:#581C87;
+    style S4 fill:#F8FAFC,stroke:#FCD34D,stroke-width:1.2px,color:#78350F;
+    style S5 fill:#F8FAFC,stroke:#6EE7B7,stroke-width:1.2px,color:#064E3B;

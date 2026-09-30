@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
@@ -11,13 +11,16 @@ import {
   Eye, 
   CloudLightning, 
   ShieldAlert, 
-  Navigation 
+  Navigation,
+  RefreshCw
 } from 'lucide-react';
+import { fetchAviationAirports } from '@/lib/api';
 
 export default function AviationPage() {
   const [selectedAirport, setSelectedAirport] = useState<'VOBL' | 'VIDP' | 'VABB'>('VOBL');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const airports = {
+  const [airports, setAirports] = useState<Record<string, any>>({
     'VOBL': {
       code: 'VOBL',
       name: 'Kempegowda International Airport (Bengaluru)',
@@ -71,9 +74,27 @@ export default function AviationPage() {
         { name: 'EXOLU', status: 'Clear Oceanic', delay: 'On-Time' }
       ]
     }
+  });
+
+  const loadAviationData = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchAviationAirports();
+      if (data && Object.keys(data).length > 0) {
+        setAirports(data);
+      }
+    } catch (err) {
+      console.error('Error loading aviation telemetry:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const current = airports[selectedAirport];
+  useEffect(() => {
+    loadAviationData();
+  }, []);
+
+  const current = airports[selectedAirport] || airports['VOBL'];
 
   return (
     <div className="page-container" style={{ maxWidth: '1360px', padding: '36px 28px 80px' }}>
@@ -82,15 +103,23 @@ export default function AviationPage() {
         <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           <ArrowLeft size={18} /> Back to Live Radar Command Center
         </Link>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: current.alertLevel === 'Severe' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', border: `1px solid ${current.alertLevel === 'Severe' ? '#ef4444' : '#10B981'}`, padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: current.alertLevel === 'Severe' ? '#ef4444' : '#10B981', fontWeight: 600 }}>
-          <Plane size={14} /> ATC Terminal Weather Radar Sync Active
-        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={loadAviationData}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          >
+            <RefreshCw size={13} className={isLoading ? 'spin-animation' : ''} /> Live METAR Sync
+          </button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: current.alertLevel === 'Severe' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.15)', border: `1px solid ${current.alertLevel === 'Severe' ? '#ef4444' : '#10B981'}`, padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: current.alertLevel === 'Severe' ? '#ef4444' : '#10B981', fontWeight: 600 }}>
+            <Plane size={14} /> ATC Terminal Weather Radar Sync Active
+          </span>
+        </div>
       </div>
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ margin: '0 0 8px 0', fontSize: '30px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Plane size={30} color="var(--color-precip)" /> Aviation Terminal Weather & Runway Safety
+          <Plane size={30} color="var(--color-precip)" /> Aviation Terminal Weather &amp; Runway Safety
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '15px' }}>
           Microburst detection, runway low-level wind shear (LLWS), flight corridor holding stack risk, and live METAR / TAF decoding.
@@ -99,10 +128,10 @@ export default function AviationPage() {
 
       {/* Airport Switcher Bar */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
-        {(Object.keys(airports) as Array<keyof typeof airports>).map(code => (
+        {Object.keys(airports).map(code => (
           <button
             key={code}
-            onClick={() => setSelectedAirport(code)}
+            onClick={() => setSelectedAirport(code as any)}
             style={{
               padding: '12px 18px',
               borderRadius: '10px',
@@ -128,119 +157,90 @@ export default function AviationPage() {
 
       {/* Airport Status Hero Banner */}
       <div className="glass-panel" style={{ padding: '24px', marginBottom: '28px', borderLeft: `4px solid ${current.alertLevel === 'Severe' ? '#ef4444' : '#10B981'}` }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Terminal Area Status</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', marginTop: '4px', color: current.alertLevel === 'Severe' ? '#ef4444' : 'var(--text-primary)' }}>
-              {current.status}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{current.name}</div>
-          </div>
-
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Flight Diversion Probability</div>
-            <div style={{ fontSize: '26px', fontWeight: 'bold', color: current.alertLevel === 'Severe' ? '#ef4444' : '#10B981', marginTop: '4px' }}>
-              {current.diversionRisk}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Alternate Hub: Chennai VOAA / Hyderabad VOHS</div>
-          </div>
-
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Low-Level Wind Shear (LLWS)</div>
-            <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#f59e0b', marginTop: '4px' }}>
-              {current.alertLevel === 'Severe' ? 'CRITICAL (-18kt loss)' : 'NOMINAL (<5kt)'}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Doppler Terminal Radar (TDWR) sweep</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Runway Approach Grid */}
-      <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Compass size={20} color="var(--color-precip)" /> Runway Approach Corridor & Shear Threat
-      </h2>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-        {current.runways.map((rwy, idx) => (
-          <div key={idx} className="glass-panel" style={{ padding: '22px', borderLeft: `4px solid ${rwy.color}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Runway {rwy.id}</span>
-              <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', color: rwy.color }}>
-                {rwy.status}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+              <span style={{ fontSize: '24px', fontWeight: 'bold' }}>{current.name}</span>
+              <span style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '4px', background: current.alertLevel === 'Severe' ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)', color: current.alertLevel === 'Severe' ? '#ef4444' : '#10B981', fontWeight: 600 }}>
+                {current.status}
               </span>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', marginBottom: '14px' }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>Surface Wind:</span>
-                <div style={{ fontWeight: 600 }}>{rwy.wind}</div>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>Crosswind:</span>
-                <div style={{ fontWeight: 600, color: rwy.crosswind.includes('21') ? '#ef4444' : 'inherit' }}>{rwy.crosswind}</div>
-              </div>
-            </div>
-
-            <div style={{ padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', fontSize: '12px' }}>
-              <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '10px', textTransform: 'uppercase' }}>Microburst / Shear Monitor:</span>
-              <span style={{ fontWeight: 'bold', color: rwy.color }}>{rwy.microburst}</span>
+            <div style={{ fontFamily: 'monospace', fontSize: '13px', color: '#93C5FD', background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '6px', marginTop: '8px' }}>
+              METAR: {current.metarRaw}
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* METAR Stream & Terminal Waypoint Holding Stack */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px' }}>
-        {/* Raw & Decoded METAR */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Eye size={20} color="#60A5FA" /> Decoded Meteorological Aerodrome Report (METAR)
-          </h2>
-
-          <div style={{ padding: '14px', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontFamily: 'monospace', fontSize: '13px', color: '#86efac', marginBottom: '16px' }}>
-            {current.metarRaw}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Wind Component:</span>
-              <span style={{ fontWeight: 600 }}>250° at 22 knots, Gusts to 38 knots</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Surface Visibility:</span>
-              <span style={{ fontWeight: 600, color: '#f59e0b' }}>2,400 meters (Reduced in Heavy Thunderstorm Rain)</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Convective Clouds:</span>
-              <span style={{ fontWeight: 600, color: '#ef4444' }}>Cumulonimbus (CB) at 1,200 ft AGL; Overcast 2,500 ft</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Altimeter QNH:</span>
-              <span style={{ fontWeight: 600 }}>1011 hPa (29.85 inHg)</span>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Flight Diversion Probability</div>
+            <div style={{ fontSize: '32px', fontWeight: 'bold', color: current.alertLevel === 'Severe' ? '#ef4444' : '#10B981' }}>
+              {current.diversionRisk}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Airspace Holding Waypoints */}
+      {/* Runway Safety & Corridor Feeds */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '24px' }}>
+        
+        {/* Active Runway Status */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Navigation size={20} color="var(--color-warning)" /> Terminal Airspace Entry Gates
+            <Navigation size={20} color="var(--color-precip)" /> Runway Operations &amp; Wind Shear Analysis
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {current.runways.map((r: any, i: number) => (
+              <div key={i} style={{ padding: '16px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderLeft: `4px solid ${r.color}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Runway {r.id} ({r.heading})</span>
+                  <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: `${r.color}20`, color: r.color, fontWeight: 600 }}>
+                    {r.status}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px', marginTop: '8px' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Surface Wind: </span>
+                    <strong style={{ color: 'var(--text-primary)' }}>{r.wind}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Crosswind Component: </span>
+                    <strong style={{ color: r.crosswind.includes('21') ? '#ef4444' : '#f59e0b' }}>{r.crosswind}</strong>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '6px', background: `${r.color}15`, color: r.color, fontSize: '12px', fontWeight: 600 }}>
+                  &bull; {r.microburst}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Inbound Flight Corridor Waypoints */}
+        <div className="glass-panel" style={{ padding: '24px' }}>
+          <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Compass size={20} color="var(--color-warning)" /> Inbound Gate Convective Gates
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {current.waypoints.map((wp, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.15)', borderRadius: '6px', fontSize: '12px' }}>
+            {current.waypoints.map((wp: any, i: number) => (
+              <div key={i} style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--border-color)' }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '13px' }}>{wp.name}</div>
-                  <div style={{ color: wp.status.includes('Closed') || wp.status.includes('Stall') ? '#ef4444' : 'var(--text-secondary)' }}>{wp.status}</div>
+                  <div style={{ fontSize: '11px', color: wp.status.includes('Closed') ? '#ef4444' : 'var(--text-secondary)' }}>
+                    {wp.status}
+                  </div>
                 </div>
-                <span style={{ fontWeight: 'bold', color: wp.delay.includes('+') || wp.delay === 'Holding' ? '#f59e0b' : '#10B981' }}>
+
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: wp.delay.includes('+') ? '#f59e0b' : wp.delay === 'Holding' ? '#ef4444' : '#10B981' }}>
                   {wp.delay}
                 </span>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );

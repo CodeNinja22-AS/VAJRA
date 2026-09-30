@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
@@ -11,14 +11,17 @@ import {
   Activity, 
   AlertOctagon, 
   Layers, 
-  ChevronRight 
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { fetchSoundingProfile, fetchStationIndices } from '@/lib/api';
 
 export default function ThermodynamicsPage() {
   const [activeStation, setActiveStation] = useState<'blr-sounding' | 'del-sounding' | 'mum-sounding'>('blr-sounding');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const soundingProfiles = [
+  const [soundingProfiles, setSoundingProfiles] = useState<any[]>([
     { pressure: 1000, altitude: 0.9, temp: 28.4, dewpoint: 23.2, parcel: 28.4 },
     { pressure: 925, altitude: 1.5, temp: 22.8, dewpoint: 20.1, parcel: 24.2 },
     { pressure: 850, altitude: 2.2, temp: 18.0, dewpoint: 16.5, parcel: 20.8 },
@@ -30,9 +33,9 @@ export default function ThermodynamicsPage() {
     { pressure: 200, altitude: 12.8, temp: -54.0, dewpoint: -68.0, parcel: -52.4 },
     { pressure: 150, altitude: 14.6, temp: -66.5, dewpoint: -79.0, parcel: -67.8 },
     { pressure: 100, altitude: 16.8, temp: -74.2, dewpoint: -88.0, parcel: -82.0 },
-  ];
+  ]);
 
-  const indices = [
+  const [indices, setIndices] = useState<any[]>([
     { name: 'SBCAPE', value: '1,850 J/kg', desc: 'Surface-Based Convective Available Potential Energy', severity: 'Extreme', color: '#ef4444' },
     { name: 'MUCAPE', value: '2,240 J/kg', desc: 'Most Unstable Parcel Buoyant Energy', severity: 'Extreme', color: '#ef4444' },
     { name: 'CIN', value: '-18 J/kg', desc: 'Convective Inhibition (Inversion Cap broken)', severity: 'Favorable', color: '#10B981' },
@@ -41,7 +44,7 @@ export default function ThermodynamicsPage() {
     { name: 'SRH 0-3km', value: '210 m²/s²', desc: 'Storm Relative Helicity (Mesocyclone Potential)', severity: 'Severe', color: '#ef4444' },
     { name: 'K-Index', value: '38.5', desc: 'Air-Mass Thunderstorm Potential', severity: 'High', color: '#f59e0b' },
     { name: 'PWAT', value: '58.2 mm', desc: 'Precipitable Water Vapor in Atmospheric Column', severity: 'Torrential', color: '#3B82F6' },
-  ];
+  ]);
 
   const verticalLevels = [
     { level: 'EL (Equilibrium Level)', hpa: '165 hPa', alt: '13.8 km', desc: 'Storm Anvil / Overshooting Convective Top' },
@@ -50,6 +53,26 @@ export default function ThermodynamicsPage() {
     { level: 'LCL (Lifted Condensation Level)', hpa: '920 hPa', alt: '0.8 km', desc: 'Cloud Base / Ground Moisture Saturation' },
   ];
 
+  const loadSoundingData = async () => {
+    setIsLoading(true);
+    try {
+      const [profileData, indicesData] = await Promise.all([
+        fetchSoundingProfile(activeStation),
+        fetchStationIndices(activeStation)
+      ]);
+      if (profileData && profileData.length > 0) setSoundingProfiles(profileData);
+      if (indicesData && indicesData.length > 0) setIndices(indicesData);
+    } catch (err) {
+      console.error('Error fetching sounding:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSoundingData();
+  }, [activeStation]);
+
   return (
     <div className="page-container" style={{ maxWidth: '1360px', padding: '36px 28px 80px' }}>
       {/* Top Nav */}
@@ -57,15 +80,23 @@ export default function ThermodynamicsPage() {
         <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           <ArrowLeft size={18} /> Back to Live Radar Command Center
         </Link>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid var(--color-severe)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#ff6b6b', fontWeight: 600 }}>
-          <AlertOctagon size={14} /> Severe Convective Instability Active
-        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            onClick={loadSoundingData}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          >
+            <RefreshCw size={13} className={isLoading ? 'spin-animation' : ''} /> Live Radiosonde Sync
+          </button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid var(--color-severe)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#ff6b6b', fontWeight: 600 }}>
+            <AlertOctagon size={14} /> Severe Convective Instability Active
+          </span>
+        </div>
       </div>
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ margin: '0 0 8px 0', fontSize: '30px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Thermometer size={30} color="#f59e0b" /> Vertical Atmospheric Soundings & Thermodynamics
+          <Thermometer size={30} color="#f59e0b" /> Vertical Atmospheric Soundings &amp; Thermodynamics
         </h1>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '15px' }}>
           Deep-column thermodynamic profile (Skew-T Log-P) and kinematic wind shear analysis driving VAJRA convective initiation nowcasts.
@@ -73,7 +104,7 @@ export default function ThermodynamicsPage() {
       </div>
 
       {/* Station Selector Bar */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '28px' }}>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '28px', flexWrap: 'wrap' }}>
         {[
           { id: 'blr-sounding', label: 'Bengaluru (DWR / Radiosonde 43295)', status: 'CAPE: 1850 J/kg' },
           { id: 'del-sounding', label: 'Delhi-NCR (Safdarjung 42182)', status: 'CAPE: 1200 J/kg' },
@@ -93,7 +124,8 @@ export default function ThermodynamicsPage() {
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              transition: 'all 0.2s'
             }}
           >
             <span>{st.label}</span>
@@ -104,95 +136,79 @@ export default function ThermodynamicsPage() {
         ))}
       </div>
 
-      {/* Top Main Section: Skew-T Sounding Profile Chart + Critical Levels */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '32px' }}>
-        {/* Sounding Chart */}
+      {/* Sounding Skew-T Plot + Atmospheric Inversion Indices */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '24px', marginBottom: '28px' }}>
+        
+        {/* Skew-T Emulation Plot */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div>
-              <h2 style={{ fontSize: '18px', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Layers size={20} color="var(--color-precip)" /> Skew-T Vertical Atmospheric Column Profile
-              </h2>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                Pressure Altitude (1000 hPa to 100 hPa) vs. Temperature, Dewpoint & Convective Parcel Ascent
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '14px', fontSize: '11px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ef4444' }}>
-                <span style={{ width: '10px', height: '10px', background: '#ef4444', borderRadius: '2px' }} /> Temp (T)
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10B981' }}>
-                <span style={{ width: '10px', height: '10px', background: '#10B981', borderRadius: '2px' }} /> Dewpoint (Td)
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f59e0b' }}>
-                <span style={{ width: '10px', height: '10px', background: '#f59e0b', borderRadius: '2px' }} /> Parcel Path (CAPE)
-              </span>
+            <h2 style={{ fontSize: '18px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Layers size={20} color="var(--color-precip)" /> Deep-Troposphere Thermodynamic Profile
+            </h2>
+            <div style={{ display: 'flex', gap: '14px', fontSize: '12px' }}>
+              <span style={{ color: '#ef4444' }}>&bull; Ambient Temp (T)</span>
+              <span style={{ color: '#10B981' }}>&bull; Dewpoint (Td)</span>
+              <span style={{ color: '#f59e0b' }}>&bull; Lifted Parcel (Tp)</span>
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={soundingProfiles}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="temp" stroke="var(--text-secondary)" fontSize={11} label={{ value: 'Temperature (°C)', position: 'insideBottom', offset: -5, fill: 'var(--text-secondary)', fontSize: 11 }} />
-              <YAxis dataKey="pressure" stroke="var(--text-secondary)" fontSize={11} reversed={true} domain={[100, 1000]} label={{ value: 'Pressure (hPa)', angle: -90, position: 'insideLeft', fill: 'var(--text-secondary)', fontSize: 11 }} />
-              <Tooltip contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '6px' }} />
-              <Line type="monotone" dataKey="temp" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3 }} name="Air Temp (°C)" />
-              <Line type="monotone" dataKey="dewpoint" stroke="#10B981" strokeWidth={2.5} dot={{ r: 3 }} name="Dewpoint (°C)" />
-              <Line type="monotone" dataKey="parcel" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Rising Parcel (°C)" />
-            </LineChart>
-          </ResponsiveContainer>
+          <div style={{ height: '340px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={soundingProfiles} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="pressure" reversed unit=" hPa" stroke="var(--text-secondary)" fontSize={11} />
+                <YAxis unit="°C" stroke="var(--text-secondary)" fontSize={11} domain={[-90, 40]} />
+                <Tooltip 
+                  contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
+                  labelFormatter={(v) => `Pressure: ${v} hPa`}
+                />
+                <Line type="monotone" dataKey="temp" stroke="#ef4444" strokeWidth={2.5} dot={false} name="Temperature" />
+                <Line type="monotone" dataKey="dewpoint" stroke="#10B981" strokeWidth={2.5} dot={false} name="Dewpoint" />
+                <Line type="monotone" dataKey="parcel" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 4" dot={false} name="Lifted Parcel" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+            Positive area between Parcel (Yellow) and Temp (Red) represents CAPE (Convective Available Potential Energy).
+          </div>
         </div>
 
-        {/* Critical Convective Levels */}
+        {/* Thermodynamic Instability Indices */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={20} color="var(--color-warning)" /> Critical Boundary Layers
+            <Gauge size={20} color="var(--color-warning)" /> Severe Weather Instability Indices
           </h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {verticalLevels.map((lvl, idx) => (
-              <div key={idx} style={{ padding: '12px', background: 'rgba(0,0,0,0.18)', borderRadius: '8px', borderLeft: '3px solid var(--color-precip)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '13px' }}>{lvl.level}</span>
-                  <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--color-precip)', fontWeight: 'bold' }}>
-                    {lvl.hpa} &bull; {lvl.alt}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                  {lvl.desc}
-                </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {indices.map((idx, i) => (
+              <div key={i} style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', borderLeft: `3px solid ${idx.color}` }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{idx.name}</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: idx.color, margin: '2px 0' }}>{idx.value}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.2 }}>{idx.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Severe Instability Scorecard Grid */}
-      <h2 style={{ fontSize: '20px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Gauge size={22} color="var(--color-severe)" /> Severe Thunderstorm & Convective Indices
-      </h2>
+      {/* Critical Vertical Layers */}
+      <div className="glass-panel" style={{ padding: '24px' }}>
+        <h2 style={{ fontSize: '18px', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Activity size={20} color="#10B981" /> Critical Convective Atmospheric Boundaries
+        </h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-        {indices.map((ind, i) => (
-          <div key={i} className="glass-panel" style={{ padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: 700, fontSize: '15px' }}>{ind.name}</span>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', color: ind.color }}>
-                  {ind.severity}
-                </span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+          {verticalLevels.map((lvl, i) => (
+            <div key={i} style={{ padding: '16px', borderRadius: '8px', background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{lvl.level}</strong>
+                <span style={{ fontSize: '12px', color: 'var(--color-precip)', fontWeight: 'bold' }}>{lvl.alt}</span>
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-                {ind.desc}
-              </p>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Pressure: {lvl.hpa}</div>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{lvl.desc}</p>
             </div>
-
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: ind.color, marginTop: '16px' }}>
-              {ind.value}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

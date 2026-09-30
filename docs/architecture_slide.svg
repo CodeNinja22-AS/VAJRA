@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 680" width="340" height="680">
+  <defs>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.05" />
+    </filter>
+    <filter id="hero-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#7C3AED" flood-opacity="0.15" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748B" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#7C3AED" />
+    </marker>
+  </defs>
+
+  <style>
+    .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; fill: #0F172A; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 9.5px; font-weight: 500; fill: #475569; }
+    .badge { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+    .tag { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 8.5px; font-weight: 600; }
+  </style>
+
+  <!-- CONTAINER FRAME (CLEAN WHITE SLIDE CARD) -->
+  <rect x="2" y="2" width="336" height="676" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+
+  <!-- TIER 1: MULTI-SOURCE INGESTION & DATA LAKE -->
+  <g transform="translate(14, 16)">
+    <rect width="312" height="118" rx="10" fill="#F8FAFC" stroke="#93C5FD" stroke-width="1.2" stroke-dasharray="4 2" />
+    <rect x="10" y="-8" width="136" height="16" rx="4" fill="#EFF6FF" stroke="#60A5FA" stroke-width="1" />
+    <text x="16" y="4" class="badge" fill="#1D4ED8">1. Ingestion &amp; Lake</text>
+
+    <!-- Source Chips (3 items grid) -->
+    <rect x="10" y="14" width="92" height="44" rx="6" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" filter="url(#card-shadow)" />
+    <text x="16" y="29" class="title" font-size="9.5">📡 IMD Radar</text>
+    <text x="16" y="43" class="subtitle" font-size="8">ODIM_H5 Polar</text>
+
+    <rect x="110" y="14" width="92" height="44" rx="6" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" filter="url(#card-shadow)" />
+    <text x="116" y="29" class="title" font-size="9.5">🛰️ INSAT-3D</text>
+    <text x="116" y="43" class="subtitle" font-size="8">HDF5 TIR/WV</text>
+
+    <rect x="210" y="14" width="92" height="44" rx="6" fill="#FFFFFF" stroke="#3B82F6" stroke-width="1.2" filter="url(#card-shadow)" />
+    <text x="216" y="29" class="title" font-size="9.5">🌐 ERA5 NWP</text>
+    <text x="216" y="43" class="subtitle" font-size="8">NetCDF Grids</text>
+
+    <!-- Arrow down to Lake -->
+    <path d="M 156 59 L 156 70" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arrow)" />
+
+    <!-- Raw Data Lake Cylinder/Card -->
+    <rect x="10" y="72" width="292" height="36" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5" />
+    <text x="22" y="91" class="title" fill="#1E3A8A">🗄️ Raw Data Lake Store</text>
+    <text x="22" y="101" class="subtitle" fill="#3B82F6">AWS S3 Bucket &amp; Distributed Local Disk Archive</text>
+  </g>
+
+  <!-- CONNECTOR 1 -> 2 -->
+  <path d="M 170 134 L 170 148" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- TIER 2: PROCESSING & ENGINEERING (DASK) -->
+  <g transform="translate(14, 150)">
+    <rect width="312" height="104" rx="10" fill="#F8FAFC" stroke="#5EEAD4" stroke-width="1.2" stroke-dasharray="4 2" />
+    <rect x="10" y="-8" width="154" height="16" rx="4" fill="#F0FDFA" stroke="#2DD4BF" stroke-width="1" />
+    <text x="16" y="4" class="badge" fill="#0F766E">2. Processing (Dask)</text>
+
+    <!-- Pipeline Processors -->
+    <rect x="10" y="14" width="142" height="44" rx="6" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.2" filter="url(#card-shadow)" />
+    <text x="18" y="30" class="title" font-size="9.5">⚙️ Py-ART / Xradar</text>
+    <text x="18" y="44" class="subtitle" font-size="8">Coordinate Gridding</text>
+
+    <rect x="160" y="14" width="142" height="44" rx="6" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.2" filter="url(#card-shadow)" />
+    <text x="168" y="30" class="title" font-size="9.5">🧪 MetPy / SatPy</text>
+    <text x="168" y="44" class="subtitle" font-size="8">Physics Alignment</text>
+
+    <!-- Zarr Array Store -->
+    <rect x="10" y="66" width="292" height="30" rx="6" fill="#CCFBF1" stroke="#0F766E" stroke-width="1.5" />
+    <text x="20" y="85" class="title" font-size="10" fill="#042F2E">📦 Zarr Array Store (Cloud-Optimized Chunks)</text>
+  </g>
+
+  <!-- CONNECTOR 2 -> 3 -->
+  <path d="M 170 254 L 170 268" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- TIER 3: SPATIO-TEMPORAL AI ENGINE (HERO PURPLE) -->
+  <g transform="translate(14, 270)">
+    <rect width="312" height="82" rx="10" fill="#FAF5FF" stroke="#A855F7" stroke-width="1.8" filter="url(#hero-shadow)" />
+    <rect x="10" y="-8" width="170" height="16" rx="4" fill="#F3E8FF" stroke="#9333EA" stroke-width="1" />
+    <text x="16" y="4" class="badge" fill="#6B21A8">3. Spatio-Temporal AI</text>
+
+    <text x="18" y="28" class="title" font-size="12" fill="#581C87">🧠 ConvLSTM + Transformer Engine</text>
+    <text x="18" y="46" class="subtitle" font-size="10" fill="#6B21A8">High-Resolution Thunderstorm &amp; Rain Nowcasting</text>
+    
+    <rect x="18" y="55" width="112" height="18" rx="4" fill="#E9D5FF" />
+    <text x="26" y="67" class="tag" fill="#581C87">ONNX Runtime</text>
+
+    <rect x="136" y="55" width="158" height="18" rx="4" fill="#E9D5FF" />
+    <text x="144" y="67" class="tag" fill="#581C87">0–4h Lead Time Predictions</text>
+  </g>
+
+  <!-- CONNECTOR 3 -> 4 -->
+  <path d="M 170 352 L 170 366" stroke="#7C3AED" stroke-width="1.8" marker-end="url(#arrow-purple)" />
+
+  <!-- TIER 4: BACKEND & API LAYER -->
+  <g transform="translate(14, 368)">
+    <rect width="312" height="118" rx="10" fill="#F8FAFC" stroke="#FCD34D" stroke-width="1.2" stroke-dasharray="4 2" />
+    <rect x="10" y="-8" width="164" height="16" rx="4" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1" />
+    <text x="16" y="4" class="badge" fill="#B45309">4. Backend &amp; API Layer</text>
+
+    <!-- FastAPI Box -->
+    <rect x="10" y="14" width="292" height="36" rx="6" fill="#FFFFFF" stroke="#D97706" stroke-width="1.3" filter="url(#card-shadow)" />
+    <text x="20" y="32" class="title" font-size="11" fill="#78350F">⚡ FastAPI Inference &amp; Alert Engine</text>
+    <text x="20" y="43" class="subtitle" font-size="8.5">Async High-Concurrency REST &amp; WebSocket Endpoints</text>
+
+    <!-- Databases Row (PostGIS & Redis) -->
+    <rect x="10" y="58" width="142" height="50" rx="6" fill="#FEF3C7" stroke="#B45309" stroke-width="1.2" />
+    <text x="18" y="75" class="title" font-size="9.5" fill="#78350F">🐘 PostgreSQL + PostGIS</text>
+    <text x="18" y="89" class="subtitle" font-size="8" fill="#92400E">Spatial Geometries</text>
+    <text x="18" y="100" class="subtitle" font-size="8" fill="#92400E">&amp; Ward Alert Polygons</text>
+
+    <rect x="160" y="58" width="142" height="50" rx="6" fill="#FFEDD5" stroke="#EA580C" stroke-width="1.2" />
+    <text x="168" y="75" class="title" font-size="9.5" fill="#7C2D12">⚡ Redis Cache</text>
+    <text x="168" y="89" class="subtitle" font-size="8" fill="#9A3412">Real-Time Map Tiles</text>
+    <text x="168" y="100" class="subtitle" font-size="8" fill="#9A3412">&amp; Sub-Second State</text>
+  </g>
+
+  <!-- CONNECTOR 4 -> 5 -->
+  <path d="M 170 486 L 170 500" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- TIER 5: FRONTEND COMMAND CENTER -->
+  <g transform="translate(14, 502)">
+    <rect width="312" height="104" rx="10" fill="#F8FAFC" stroke="#6EE7B7" stroke-width="1.2" stroke-dasharray="4 2" />
+    <rect x="10" y="-8" width="174" height="16" rx="4" fill="#ECFDF5" stroke="#10B981" stroke-width="1" />
+    <text x="16" y="4" class="badge" fill="#065F46">5. Frontend Command Center</text>
+
+    <rect x="10" y="14" width="292" height="38" rx="6" fill="#FFFFFF" stroke="#059669" stroke-width="1.3" filter="url(#card-shadow)" />
+    <text x="20" y="32" class="title" font-size="10.5" fill="#064E3B">💻 Next.js 14 React Dashboard</text>
+    <text x="20" y="44" class="subtitle" font-size="8.5">Civil Defense &amp; Municipal Disaster Ops Panels</text>
+
+    <rect x="10" y="58" width="292" height="38" rx="6" fill="#D1FAE5" stroke="#047857" stroke-width="1.3" />
+    <text x="20" y="76" class="title" font-size="10.5" fill="#064E3B">🗺️ Mapbox GL JS + WebGL 3D Engine</text>
+    <text x="20" y="88" class="subtitle" font-size="8.5">Interactive Doppler Volume Render &amp; Particles</text>
+  </g>
+
+  <!-- FOOTER TECH BADGE -->
+  <g transform="translate(14, 622)">
+    <rect width="312" height="36" rx="6" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1" />
+    <text x="156" y="18" class="tag" text-anchor="middle" fill="#334155">VAJRA End-to-End Early Warning Pipeline</text>
+    <text x="156" y="29" class="subtitle" text-anchor="middle" font-size="8" fill="#64748B">Spatio-Temporal Nowcasting • SIH 2024</text>
+  </g>
+</svg>
