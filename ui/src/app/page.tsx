@@ -964,8 +964,6 @@ export default function Dashboard() {
   const timeIdxRef = useRef<number>(timeIdx);
   timeIdxRef.current = timeIdx;
 
-  const markersRef = useRef<{ marker: mapboxgl.Marker; city: CityWeatherItem; el: HTMLElement }[]>([]);
-
   // Pre-generate all 18 frames into memory on mount
   useEffect(() => {
     const frames: string[] = [];
@@ -1012,15 +1010,6 @@ export default function Dashboard() {
     });
     setPrecipitationData(city.precipitation);
     setAlerts(city.alerts);
-
-    // Update active marker styling
-    markersRef.current.forEach(item => {
-      if (item.city.id === city.id) {
-        item.el.classList.add('active');
-      } else {
-        item.el.classList.remove('active');
-      }
-    });
 
     // Dynamically project radar coverage over the selected city/locality
     if (map.current) {
@@ -1205,55 +1194,9 @@ export default function Dashboard() {
             }
           });
 
-          // Create Minimalist Locality/City Sublabels directly below Map Text
-          const currentZ = m.getZoom();
-          markersRef.current = [];
-
-          CITIES_DATA.forEach(city => {
-            const el = document.createElement('div');
-            el.className = `vajra-sublabel-marker ${city.id === selectedCity.id ? 'active' : ''}`;
-            el.style.display = currentZ >= city.minZoom ? 'block' : 'none';
-
-            el.innerHTML = `
-              <div class="vajra-map-sublabel ${city.statusClass}">
-                <span class="vajra-sublabel-dot"></span>
-                <span class="vajra-sublabel-name">${city.name}</span>
-                <span class="vajra-sublabel-divider">•</span>
-                <span class="vajra-sublabel-temp">${city.temp}°C</span>
-                <span class="vajra-sublabel-badge">${city.dangerLevel}</span>
-              </div>
-            `;
-
-            el.addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              handleSelectCity(city);
-            });
-
-            // Anchor 'top' with slight Y offset places the sublabel directly underneath the map's native locality text
-            const marker = new mapboxgl.Marker({ 
-              element: el,
-              anchor: 'top',
-              offset: [0, 8]
-            })
-              .setLngLat(city.coordinates)
-              .addTo(m);
-
-            markersRef.current.push({ marker, city, el });
-          });
-
-          // Update zoom ratio and marker visibility on every zoom step
+          // Update zoom ratio on every zoom step
           m.on('zoom', () => {
-            const z = m.getZoom();
-            setCurrentZoom(z);
-
-            markersRef.current.forEach(item => {
-              // Seamlessly reveal locality sublabels at appropriate zoom levels
-              if (z >= item.city.minZoom) {
-                item.el.style.display = 'block';
-              } else {
-                item.el.style.display = 'none';
-              }
-            });
+            setCurrentZoom(m.getZoom());
           });
 
           // Click anywhere on map to discover closest city or sample localized coordinate
@@ -1311,8 +1254,6 @@ export default function Dashboard() {
     }
 
     return () => {
-      markersRef.current.forEach(item => item.marker.remove());
-      markersRef.current = [];
       if (map.current) {
         map.current.remove();
         map.current = null;
