@@ -836,6 +836,90 @@ function getCityRadarBounds(coords: [number, number]): [[number, number], [numbe
 
 const RADAR_BOUNDS: [[number, number], [number, number], [number, number], [number, number]] = getCityRadarBounds([77.5946, 12.9716]);
 
+export interface LiveWeatherResult {
+  temp: number;
+  humidity: number;
+  wind: number;
+  precipitation: number;
+  weatherCode: number;
+  threat: string;
+  dangerLevel: 'DANGER' | 'WARNING' | 'SAFE';
+  statusClass: 'status-danger' | 'status-warning' | 'status-safe';
+  hourlyPrecip: Array<{ time: string; amount: number; confidence: number }>;
+}
+
+export async function fetchOpenMeteoLiveWeather(lat: number, lng: number): Promise<LiveWeatherResult | null> {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&hourly=precipitation,temperature_2m&forecast_days=1&timezone=auto`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.current) return null;
+
+    const temp = Math.round(data.current.temperature_2m * 10) / 10;
+    const humidity = Math.round(data.current.relative_humidity_2m);
+    const wind = Math.round(data.current.wind_speed_10m);
+    const rain = data.current.precipitation || 0;
+    const code = data.current.weather_code || 0;
+
+    let threat = 'Nominal';
+    let dangerLevel: 'DANGER' | 'WARNING' | 'SAFE' = 'SAFE';
+    let statusClass: 'status-danger' | 'status-warning' | 'status-safe' = 'status-safe';
+
+    if (rain >= 35 || code >= 95) {
+      threat = 'Critical';
+      dangerLevel = 'DANGER';
+      statusClass = 'status-danger';
+    } else if (rain >= 8 || code >= 80 || code === 65) {
+      threat = 'Moderate';
+      dangerLevel = 'WARNING';
+      statusClass = 'status-warning';
+    } else if (rain >= 1.5 || code >= 51) {
+      threat = 'Elevated';
+      dangerLevel = 'WARNING';
+      statusClass = 'status-warning';
+    }
+
+    // Build 7-step precipitation curve around the current time
+    const hourlyPrecip: number[] = data.hourly?.precipitation || [];
+    const nowHour = new Date().getHours();
+    const timeLabels = ['T-30m', 'T-15m', 'NOW', 'T+15m', 'T+30m', 'T+45m', 'T+60m'];
+
+    const formattedPrecip = timeLabels.map((label, idx) => {
+      let amount = 0;
+      if (idx === 2) {
+        amount = rain > 0 ? rain : (hourlyPrecip[nowHour] || 0);
+      } else if (idx < 2) {
+        const prevH = Math.max(0, nowHour - (2 - idx));
+        amount = hourlyPrecip[prevH] || 0;
+      } else {
+        const nextH = Math.min(23, nowHour + (idx - 2));
+        amount = hourlyPrecip[nextH] || 0;
+      }
+      return {
+        time: label,
+        amount: Math.round(amount * 10) / 10,
+        confidence: Math.max(60, 100 - idx * 6)
+      };
+    });
+
+    return {
+      temp,
+      humidity,
+      wind,
+      precipitation: rain,
+      weatherCode: code,
+      threat,
+      dangerLevel,
+      statusClass,
+      hourlyPrecip: formattedPrecip
+    };
+  } catch (err) {
+    console.warn("Live Open-Meteo fetch failed:", err);
+    return null;
+  }
+}
+
 function getCleanApiBase(): string {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
@@ -999,9 +1083,14 @@ export default function Dashboard() {
   const API_BASE = getCleanApiBase();
   const mapboxToken = (process.env.NEXT_MAPBOX_TOKEN || process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '').trim();
 
-  // Function to select a city and smoothly fly the map to it
-  const handleSelectCity = (city: CityWeatherItem) => {
+  const [liveSyncTime, setLiveSyncTime] = useState<string>('');
+
+  // Function to select a city, smoothly fly the map to it, and stream live weather
+  const handleSelectCity = async (city: CityWeatherItem, skipFlyTo = false) => {
     setSelectedCity(city);
+    selectedCityRef.current = city;
+
+    // Fast initial responsiveness with calibrated telemetry
     setTelemetry({
       temp: city.temp,
       humidity: city.humidity,
@@ -1038,18 +1127,91 @@ export default function Dashboard() {
         }
       }
 
-      // Smoothly fly map to target city coordinates
-      const targetZoom = Math.max(map.current.getZoom(), city.minZoom >= 9 ? 11.5 : 9.5);
-      map.current.flyTo({
-        center: city.coordinates,
-        zoom: targetZoom,
-        pitch: 55,
-        bearing: -15,
-        essential: true,
-        duration: 1800
-      });
+      // Smoothly fly map to target city coordinates if not dragging
+      if (!skipFlyTo) {
+        const targetZoom = Math.max(map.current.getZoom(), city.minZoom >= 9 ? 11.5 : 9.5);
+        map.current.flyTo({
+          center: city.coordinates,
+          zoom: targetZoom,
+          pitch: 55,
+          bearing: -15,
+          essential: true,
+          duration: 1800
+        });
+      }
+    }
+
+    // Stream live real-time Open-Meteo weather for this exact location
+    try {
+      const live = await fetchOpenMeteoLiveWeather(city.coordinates[1], city.coordinates[0]);
+      if (live) {
+        setTelemetry(prev => ({
+          ...prev,
+          temp: live.temp,
+          humidity: live.humidity,
+          wind: live.wind
+        }));
+        setPrecipitationData(live.hourlyPrecip);
+        setLiveSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+
+        // Dynamically update marker label on map with live metrics
+        const targetMarker = markersRef.current.find(m => m.city.id === city.id);
+        if (targetMarker) {
+          targetMarker.el.innerHTML = `
+            <div class="vajra-map-sublabel ${live.statusClass}">
+              <span class="vajra-sublabel-dot"></span>
+              <span class="vajra-sublabel-name">${city.name}</span>
+              <span class="vajra-sublabel-divider">•</span>
+              <span class="vajra-sublabel-temp">${live.temp}°C</span>
+              <span class="vajra-sublabel-badge">${live.dangerLevel}</span>
+            </div>
+          `;
+        }
+      }
+    } catch (err) {
+      console.warn("Live weather sync error:", err);
     }
   };
+
+  // On initial mount, stream real live Open-Meteo weather for initial location & local wards
+  useEffect(() => {
+    // 1. Fetch live telemetry for selected city
+    handleSelectCity(CITIES_DATA[0], true);
+
+    // 2. Fetch live measurements in parallel for top local areas
+    const syncLocalMarkers = async () => {
+      const topLocalities = CITIES_DATA.slice(0, 10);
+      for (const loc of topLocalities) {
+        try {
+          const live = await fetchOpenMeteoLiveWeather(loc.coordinates[1], loc.coordinates[0]);
+          if (live) {
+            loc.temp = live.temp;
+            loc.humidity = live.humidity;
+            loc.wind = live.wind;
+            loc.dangerLevel = live.dangerLevel;
+            loc.statusClass = live.statusClass;
+            const target = markersRef.current.find(m => m.city.id === loc.id);
+            if (target) {
+              target.el.innerHTML = `
+                <div class="vajra-map-sublabel ${live.statusClass}">
+                  <span class="vajra-sublabel-dot"></span>
+                  <span class="vajra-sublabel-name">${loc.name}</span>
+                  <span class="vajra-sublabel-divider">•</span>
+                  <span class="vajra-sublabel-temp">${live.temp}°C</span>
+                  <span class="vajra-sublabel-badge">${live.dangerLevel}</span>
+                </div>
+              `;
+            }
+          }
+        } catch {
+          // Keep resilient default
+        }
+      }
+    };
+
+    const timer = setTimeout(syncLocalMarkers, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Terminal logging simulator
   useEffect(() => {
@@ -1256,7 +1418,26 @@ export default function Dashboard() {
             });
           });
 
-          // Click anywhere on map to discover closest city or sample localized coordinate
+          // Automatically sync telemetry with locality in viewport center when user moves/pans map
+          m.on('moveend', () => {
+            const center = m.getCenter();
+            let closest = CITIES_DATA[0];
+            let minDist = Infinity;
+            CITIES_DATA.forEach(c => {
+              const d = Math.hypot(c.coordinates[0] - center.lng, c.coordinates[1] - center.lat);
+              if (d < minDist) {
+                minDist = d;
+                closest = c;
+              }
+            });
+
+            // If user panned near a locality (~25km) and not already actively viewing it
+            if (minDist < 0.25 && closest.id !== selectedCityRef.current.id) {
+              handleSelectCity(closest, true);
+            }
+          });
+
+          // Click anywhere on map to discover closest city or query live localized coordinate
           m.on('click', (e) => {
             const clickLng = e.lngLat.lng;
             const clickLat = e.lngLat.lat;
@@ -1276,22 +1457,34 @@ export default function Dashboard() {
             if (minDist < 0.8) {
               handleSelectCity(closest);
             } else {
-              // Custom localized interpolation
-              setSelectedCity({
+              // Custom localized interpolation + Live API query for custom coordinate!
+              const customCity: CityWeatherItem = {
                 ...closest,
                 id: `loc-${clickLat.toFixed(2)}-${clickLng.toFixed(2)}`,
                 name: `Grid [${clickLat.toFixed(2)}°N, ${clickLng.toFixed(2)}°E]`,
                 state: 'Micro-Grid Sector',
                 coordinates: [clickLng, clickLat],
-                temp: parseFloat((24 + Math.random() * 8).toFixed(1)),
-                humidity: Math.floor(65 + Math.random() * 30),
-                wind: Math.floor(10 + Math.random() * 35),
-                aqi: Math.floor(45 + Math.random() * 80),
-                cape: Math.floor(800 + Math.random() * 2000),
-                windShear: Math.floor(15 + Math.random() * 45),
-                point1: `Radial Velocity: ${Math.floor(Math.random() * 25 - 12)} m/s Doppler shift detected`,
-                point2: `Convective Initiation: Localized moisture convergence +34 mm/hr`
-              });
+                temp: 28.0,
+                humidity: 70,
+                wind: 15,
+                aqi: 55,
+                cape: 1200,
+                windShear: 20,
+                rainRate: '0 mm/hr',
+                threat: 'Clear',
+                dangerLevel: 'SAFE',
+                statusClass: 'status-safe',
+                color: '#10b981',
+                minZoom: 8,
+                point1: `Radial Velocity: Doppler shift detected at coordinate`,
+                point2: `Convective Initiation: Localized moisture scan active`,
+                radarEcho: 'Stratiform',
+                alerts: [
+                  { title: 'Micro-Grid Live Query', level: 'Live Coordinate', confidence: 95, eta: 0 }
+                ],
+                precipitation: closest.precipitation
+              };
+              handleSelectCity(customCity);
             }
 
             // Add click pulse beacon
@@ -1427,7 +1620,10 @@ export default function Dashboard() {
       <header className="glass-panel top-bar">
         <div className="logo">
           <h1>VAJRA</h1>
-          <span className="live-badge">LIVE {mapLayerType === 'radar' ? 'RADAR' : 'SATELLITE'} &bull; 0.5km RES</span>
+          <span className="live-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+            <span>LIVE OPEN-METEO &bull; 0.5km RES</span>
+          </span>
         </div>
 
         {/* Interactive Search Container with Autocomplete Dropdown */}
@@ -1624,8 +1820,14 @@ export default function Dashboard() {
 
       {/* Interactive Sidebar: Dynamic City Deep-Dive with the 2 Key Points */}
       <aside className="glass-panel sidebar" style={{ zIndex: 20 }}>
-        <div className="sidebar-header">
-          <h2>AI Nowcast Stream</h2>
+        <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2>AI Nowcast Stream</h2>
+            <div style={{ fontSize: '10.5px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }}></span>
+              <span>LIVE SATELLITE/NWP {liveSyncTime ? `• ${liveSyncTime}` : ''}</span>
+            </div>
+          </div>
           <div className="pulse-indicator"></div>
         </div>
 
