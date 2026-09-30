@@ -822,12 +822,19 @@ export const CITIES_DATA: CityWeatherItem[] = [
   }
 ];
 
-const RADAR_BOUNDS: [[number, number], [number, number], [number, number], [number, number]] = [
-  [77.4, 13.2], // Top left (lon, lat)
-  [77.8, 13.2], // Top right
-  [77.8, 12.8], // Bottom right
-  [77.4, 12.8]  // Bottom left
-];
+function getCityRadarBounds(coords: [number, number]): [[number, number], [number, number], [number, number], [number, number]] {
+  const [lng, lat] = coords;
+  const dLng = 0.25;
+  const dLat = 0.22;
+  return [
+    [lng - dLng, lat + dLat], // Top left (lon, lat)
+    [lng + dLng, lat + dLat], // Top right
+    [lng + dLng, lat - dLat], // Bottom right
+    [lng - dLng, lat - dLat]  // Bottom left
+  ];
+}
+
+const RADAR_BOUNDS: [[number, number], [number, number], [number, number], [number, number]] = getCityRadarBounds([77.5946, 12.9716]);
 
 function getCleanApiBase(): string {
   if (typeof window !== 'undefined') {
@@ -947,6 +954,8 @@ export default function Dashboard() {
 
   // Active Selected City (defaults to Bengaluru)
   const [selectedCity, setSelectedCity] = useState<CityWeatherItem>(CITIES_DATA[0]);
+  const selectedCityRef = useRef<CityWeatherItem>(CITIES_DATA[0]);
+  selectedCityRef.current = selectedCity;
   const [currentZoom, setCurrentZoom] = useState<number>(11.5);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -1013,8 +1022,23 @@ export default function Dashboard() {
       }
     });
 
-    // Smoothly fly map to target city coordinates
+    // Dynamically project radar coverage over the selected city/locality
     if (map.current) {
+      const source = map.current.getSource('radar') as mapboxgl.ImageSource | undefined;
+      if (source) {
+        const frameUrl = radarFramesCacheRef.current[timeIdxRef.current] || generateRadarFrame(timeIdxRef.current);
+        const bounds = getCityRadarBounds(city.coordinates);
+        try {
+          source.updateImage({
+            url: frameUrl,
+            coordinates: bounds
+          });
+        } catch (e) {
+          console.warn("Could not update radar coordinates:", e);
+        }
+      }
+
+      // Smoothly fly map to target city coordinates
       const targetZoom = Math.max(map.current.getZoom(), city.minZoom >= 9 ? 11.5 : 9.5);
       map.current.flyTo({
         center: city.coordinates,
@@ -1193,7 +1217,10 @@ export default function Dashboard() {
             el.innerHTML = `
               <div class="vajra-map-sublabel ${city.statusClass}">
                 <span class="vajra-sublabel-dot"></span>
-                <span>${city.temp}°C • ${city.dangerLevel}</span>
+                <span class="vajra-sublabel-name">${city.name}</span>
+                <span class="vajra-sublabel-divider">•</span>
+                <span class="vajra-sublabel-temp">${city.temp}°C</span>
+                <span class="vajra-sublabel-badge">${city.dangerLevel}</span>
               </div>
             `;
 
@@ -1314,7 +1341,7 @@ export default function Dashboard() {
           try {
             source.updateImage({
               url: frameUrl,
-              coordinates: RADAR_BOUNDS
+              coordinates: getCityRadarBounds(selectedCityRef.current.coordinates)
             });
           } catch (err) {
             console.warn("Could not update radar frame image:", err);
