@@ -1,30 +1,117 @@
-# Environments
+# =============================================================================
+# VAJRA - Comprehensive Security & Exclusion Gitignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Credentials, Secrets & Environment Variables (STRICT)
+# -----------------------------------------------------------------------------
 .env
+.env.*
+!.env.example
+!.env.*.example
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.keystore
+*secret*
+!*secret*.md
+*credential*
+!*credential*.md
+credentials.json
+secrets.json
+
+# -----------------------------------------------------------------------------
+# 2. Virtual Environments & Runtimes
+# -----------------------------------------------------------------------------
 .venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.pnp
+.pnp.js
 
-# Python
+# -----------------------------------------------------------------------------
+# 3. Node.js & Next.js Builds
+# -----------------------------------------------------------------------------
+node_modules/
+ui/node_modules/
+.next/
+ui/.next/
+out/
+ui/out/
+build/
+dist/
+.turbo/
+ui/.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# -----------------------------------------------------------------------------
+# 4. Logs & Debuggers
+# -----------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# -----------------------------------------------------------------------------
+# 5. Python Bytecode, Caching & Artifacts
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg
+*.egg-info/
 .pytest_cache/
-
-# Data and Notebooks
-data/raw/*
-data/processed/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-notebooks/.ipynb_checkpoints
-
-# IDEs
-.vscode/
-.idea/
-
-# Tooling
 .ruff_cache/
 .mypy_cache/
+.coverage
+htmlcov/
+
+# -----------------------------------------------------------------------------
+# 6. Data Lakes & Large Cached Datasets
+# -----------------------------------------------------------------------------
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/temp/
+notebooks/.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# -----------------------------------------------------------------------------
+# 7. IDE & OS Metadata
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------------------------------------------------------------
+# 8. Cloud & Platform Deployments
+# -----------------------------------------------------------------------------
+.vercel
+ui/.vercel
+.railway
