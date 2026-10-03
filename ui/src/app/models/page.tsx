@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { ArrowLeft, Cpu, Layers, GitMerge, Zap, Brain, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
 import { fetchModelsInfo } from '@/lib/api';
 
@@ -52,7 +53,8 @@ export default function ModelsPage() {
   }, []);
 
   return (
-    <div className="page-container" style={{ maxWidth: '1200px', padding: '40px 24px 80px' }}>
+    <div className="page-container" style={{ maxWidth: '1200px', padding: '24px 24px 100px' }}>
+      <Navbar />
       <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px', textDecoration: 'none' }}>
         <ArrowLeft size={18} /> Back to Command Center
       </Link>

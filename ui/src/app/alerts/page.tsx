@@ -1,10 +1,12 @@
 "use client";
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { ArrowLeft, AlertTriangle, CloudLightning, Droplets } from 'lucide-react';
 
 export default function Alerts() {
   return (
-    <div className="page-container">
+    <div className="page-container" style={{ maxWidth: '1000px', padding: '24px 24px 100px' }}>
+      <Navbar />
       <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
         <ArrowLeft size={20} /> Back to Dashboard
       </Link>

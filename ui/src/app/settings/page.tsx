@@ -1,13 +1,15 @@
 "use client";
 import { useTheme } from '@/components/ThemeProvider';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { ArrowLeft, Moon, Sun, Monitor } from 'lucide-react';
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="page-container">
+    <div className="page-container" style={{ maxWidth: '1000px', padding: '24px 24px 100px' }}>
+      <Navbar />
       <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '32px' }}>
         <ArrowLeft size={20} /> Back to Dashboard
       </Link>

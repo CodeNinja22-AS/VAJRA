@@ -71,13 +71,40 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
 }
 
+html {
+  scroll-behavior: smooth;
+  min-height: 100%;
+}
+
 body {
   background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* App-like feel */
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto; /* Allow pages to scroll naturally */
+}
+
+/* Custom sleek scrollbar for entire website */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 14, 23, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-precip);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(10, 14, 23, 0.6);
 }
 
 /* Glassmorphism */
@@ -429,9 +456,13 @@ body {
 
 /* Pages */
 .page-container {
-  padding: 100px 40px 40px; /* Account for top bar */
-  max-width: 800px;
+  min-height: 100vh;
+  padding: 32px 28px 120px;
+  max-width: 1360px;
   margin: 0 auto;
+  box-sizing: border-box;
+  overflow-y: visible;
+  position: relative;
 }
 .settings-section {
   margin-bottom: 32px;
@@ -441,4 +472,58 @@ body {
 }
 .settings-row {
   display: flex; justify-content: space-between; align-items: center; padding: 16px 0;
+}
+
+/* Responsive Overlays & Viewport Optimization */
+@media (max-width: 1380px) {
+  .search-container {
+    width: 170px !important;
+  }
+  .nav-link-btn {
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    gap: 4px !important;
+  }
+}
+
+@media (max-width: 1150px) {
+  .top-bar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .nav-actions {
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+  .nav-actions::-webkit-scrollbar {
+    display: none;
+  }
+  .search-container {
+    display: none !important;
+  }
+  .sidebar {
+    width: 320px !important;
+  }
+  .bottom-dock {
+    right: 360px !important;
+  }
+}
+
+@media (max-width: 850px) {
+  .sidebar {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: 45vh !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  .bottom-dock {
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(45vh + 10px) !important;
+  }
 }

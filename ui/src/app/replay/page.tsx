@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 import { 
   ArrowLeft, 
   RotateCcw, 
@@ -84,7 +85,8 @@ export default function ReplayPage() {
   const currentStep = timelineSteps[timeStep] || timelineSteps[0];
 
   return (
-    <div className="page-container" style={{ maxWidth: '1360px', padding: '36px 28px 80px' }}>
+    <div className="page-container" style={{ maxWidth: '1360px', padding: '24px 28px 100px' }}>
+      <Navbar />
       {/* Top Nav */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <Link href="/" className="nav-icon" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
